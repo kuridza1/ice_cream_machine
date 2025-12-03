@@ -1,17 +1,17 @@
 {
   "Version": 1,
-  "WorkspaceRootPath": "C:\\Users\\Jovana\\Desktop\\Fakultet\\Ra\u010Dunarska grafika\\IceCreamMaker\\",
+  "WorkspaceRootPath": "C:\\Users\\Jovana\\Desktop\\Fakultet\\Ra\u010Dunarska grafika\\ice_cream_machine\\IceCreamMaker\\",
   "Documents": [
     {
-      "AbsoluteMoniker": "D:0:0:{A013F4F9-F11F-4789-BFE2-9D318A7DCAA3}|IceCreamMaker.vcxproj|C:\\Users\\Jovana\\Desktop\\Fakultet\\Ra\u010Dunarska grafika\\IceCreamMaker\\Main.cpp||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}",
+      "AbsoluteMoniker": "D:0:0:{A013F4F9-F11F-4789-BFE2-9D318A7DCAA3}|IceCreamMaker.vcxproj|C:\\Users\\Jovana\\Desktop\\Fakultet\\Ra\u010Dunarska grafika\\ice_cream_machine\\IceCreamMaker\\Main.cpp||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}",
       "RelativeMoniker": "D:0:0:{A013F4F9-F11F-4789-BFE2-9D318A7DCAA3}|IceCreamMaker.vcxproj|solutionrelative:Main.cpp||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}"
     },
     {
-      "AbsoluteMoniker": "D:0:0:{A013F4F9-F11F-4789-BFE2-9D318A7DCAA3}|IceCreamMaker.vcxproj|C:\\Users\\Jovana\\Desktop\\Fakultet\\Ra\u010Dunarska grafika\\IceCreamMaker\\particle.vert||{8B382828-6202-11D1-8870-0000F87579D2}",
+      "AbsoluteMoniker": "D:0:0:{A013F4F9-F11F-4789-BFE2-9D318A7DCAA3}|IceCreamMaker.vcxproj|C:\\Users\\Jovana\\Desktop\\Fakultet\\Ra\u010Dunarska grafika\\ice_cream_machine\\IceCreamMaker\\particle.vert||{8B382828-6202-11D1-8870-0000F87579D2}",
       "RelativeMoniker": "D:0:0:{A013F4F9-F11F-4789-BFE2-9D318A7DCAA3}|IceCreamMaker.vcxproj|solutionrelative:particle.vert||{8B382828-6202-11D1-8870-0000F87579D2}"
     },
     {
-      "AbsoluteMoniker": "D:0:0:{A013F4F9-F11F-4789-BFE2-9D318A7DCAA3}|IceCreamMaker.vcxproj|C:\\Users\\Jovana\\Desktop\\Fakultet\\Ra\u010Dunarska grafika\\IceCreamMaker\\particle.frag||{8B382828-6202-11D1-8870-0000F87579D2}",
+      "AbsoluteMoniker": "D:0:0:{A013F4F9-F11F-4789-BFE2-9D318A7DCAA3}|IceCreamMaker.vcxproj|C:\\Users\\Jovana\\Desktop\\Fakultet\\Ra\u010Dunarska grafika\\ice_cream_machine\\IceCreamMaker\\particle.frag||{8B382828-6202-11D1-8870-0000F87579D2}",
       "RelativeMoniker": "D:0:0:{A013F4F9-F11F-4789-BFE2-9D318A7DCAA3}|IceCreamMaker.vcxproj|solutionrelative:particle.frag||{8B382828-6202-11D1-8870-0000F87579D2}"
     }
   ],
@@ -72,9 +72,9 @@
               "$type": "Document",
               "DocumentIndex": 2,
               "Title": "particle.frag",
-              "DocumentMoniker": "C:\\Users\\Jovana\\Desktop\\Fakultet\\Ra\u010Dunarska grafika\\IceCreamMaker\\particle.frag",
+              "DocumentMoniker": "C:\\Users\\Jovana\\Desktop\\Fakultet\\Ra\u010Dunarska grafika\\ice_cream_machine\\IceCreamMaker\\particle.frag",
               "RelativeDocumentMoniker": "particle.frag",
-              "ToolTip": "C:\\Users\\Jovana\\Desktop\\Fakultet\\Ra\u010Dunarska grafika\\IceCreamMaker\\particle.frag",
+              "ToolTip": "C:\\Users\\Jovana\\Desktop\\Fakultet\\Ra\u010Dunarska grafika\\ice_cream_machine\\IceCreamMaker\\particle.frag",
               "RelativeToolTip": "particle.frag",
               "ViewState": "AgIAAAAAAAAAAAAAAAAAAA4AAAABAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.001001|",
@@ -84,9 +84,9 @@
               "$type": "Document",
               "DocumentIndex": 1,
               "Title": "particle.vert",
-              "DocumentMoniker": "C:\\Users\\Jovana\\Desktop\\Fakultet\\Ra\u010Dunarska grafika\\IceCreamMaker\\particle.vert",
+              "DocumentMoniker": "C:\\Users\\Jovana\\Desktop\\Fakultet\\Ra\u010Dunarska grafika\\ice_cream_machine\\IceCreamMaker\\particle.vert",
               "RelativeDocumentMoniker": "particle.vert",
-              "ToolTip": "C:\\Users\\Jovana\\Desktop\\Fakultet\\Ra\u010Dunarska grafika\\IceCreamMaker\\particle.vert",
+              "ToolTip": "C:\\Users\\Jovana\\Desktop\\Fakultet\\Ra\u010Dunarska grafika\\ice_cream_machine\\IceCreamMaker\\particle.vert",
               "RelativeToolTip": "particle.vert",
               "ViewState": "AgIAAAAAAAAAAAAAAAAAABQAAAABAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.001001|",
@@ -96,11 +96,11 @@
               "$type": "Document",
               "DocumentIndex": 0,
               "Title": "Main.cpp",
-              "DocumentMoniker": "C:\\Users\\Jovana\\Desktop\\Fakultet\\Ra\u010Dunarska grafika\\IceCreamMaker\\Main.cpp",
+              "DocumentMoniker": "C:\\Users\\Jovana\\Desktop\\Fakultet\\Ra\u010Dunarska grafika\\ice_cream_machine\\IceCreamMaker\\Main.cpp",
               "RelativeDocumentMoniker": "Main.cpp",
-              "ToolTip": "C:\\Users\\Jovana\\Desktop\\Fakultet\\Ra\u010Dunarska grafika\\IceCreamMaker\\Main.cpp*",
-              "RelativeToolTip": "Main.cpp*",
-              "ViewState": "AgIAABkAAAAAAAAAAAAQwCcAAAAaAAAAAAAAAA==",
+              "ToolTip": "C:\\Users\\Jovana\\Desktop\\Fakultet\\Ra\u010Dunarska grafika\\ice_cream_machine\\IceCreamMaker\\Main.cpp",
+              "RelativeToolTip": "Main.cpp",
+              "ViewState": "AgIAAG0CAAAAAAAAAAAswGgCAAAlAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000677|",
               "WhenOpened": "2025-12-02T14:00:15.896Z",
               "EditorCaption": ""

@@ -23,10 +23,45 @@ struct Sprinkle {
     bool active;
     float color[7];
     float slideTimer;      // Timer for sliding phase
-    bool isSliding;        // Currently in sliding phase
-    bool hasFallenOff;     // Has fallen off the shelf
-    int collisionState;    // 0=falling, 1=on shelf, 2=on final ground
+    bool isInTunnel;       // Currently in the tunnel
+    bool waitingToExit;    // Waiting at tunnel exit
+    float waitTimer;       // How long waiting at exit
+    int collisionState;    // 0=falling, 1=in tunnel, 2=falling from exit, 3=on ice cream
 };
+
+// Add after the Sprinkle struct
+struct IceCream {
+    float x, y;           // Position (for falling stream)
+    float size;
+    float color[3];
+    bool active;
+    bool inCup;           // True when in the cup
+    float cupX, cupY;     // Position in cup (spiral coordinates)
+    float heightInCup;    // Height in the spiral
+    float angle;          // Angle in spiral
+    float rotation;       // Rotation for visual effect
+};
+
+// Add after sprinkles vector
+std::vector<IceCream> iceCreams;
+bool iceCreamFlow = false;
+float iceCreamSpawnTimer = 0.0f;
+
+// Ice cream constants
+const float ICE_CREAM_PIPE_X = -0.15f;    // Pipe position
+const float ICE_CREAM_PIPE_Y = 0.3f;
+const float ICE_CREAM_CUP_X = 0.0f;       // Cup position (center)
+const float ICE_CREAM_CUP_Y = -0.7f;
+const float ICE_CREAM_CUP_RADIUS = 0.2f;  // Cup radius
+const float ICE_CREAM_CUP_BOTTOM = -0.8f; // Bottom of cup
+const float ICE_CREAM_SPIRAL_RADIUS = 0.1f;
+const float ICE_CREAM_SPIRAL_SPEED = 2.0f; // How fast it spirals
+const float ICE_CREAM_FALL_SPEED = 0.5f;
+const float ICE_CREAM_SIZE = 0.02f;
+
+// Spiral parameters
+float currentSpiralAngle = 0.0f;
+float currentSpiralHeight = ICE_CREAM_CUP_BOTTOM + 0.01f; // Start just above bottom
 
 std::vector<Sprinkle> sprinkles;
 bool leverVertical = false;
@@ -35,14 +70,28 @@ std::random_device rd;
 std::mt19937 gen(rd());
 
 // Physics constants
-const float GRAVITY = -2.0f;           // Slightly stronger gravity
-const float DAMPING = 0.3f;            // Less bounce
-const float FRICTION = 1.0f;          // Slower sliding
-const float SHELF_Y = -0.065f;           // Higher shelf position
+const float GRAVITY = -2.0f;
+const float DAMPING = 0.3f;
+const float FRICTION = 0.85f;
 const float FINAL_GROUND_Y = -0.3f;    // Ice cream position
-const float SLIDE_DURATION = 0.0004f;     // How long to slide before falling
-const float SHELF_START_X = -0.36f;        // Width of the shelf
-const float SHELF_END_X = 0.0;
+
+// Tunnel parameters (diagonal line from start to end)
+const float TUNNEL_START_X = -0.36f;   // Where sprinkles enter
+const float TUNNEL_START_Y = -0.02f;  // Start height
+const float TUNNEL_END_X = 0.05f;      // Where they fall out (above ice cream)
+const float TUNNEL_END_Y = -0.15f;     // End height
+
+// Calculate tunnel slope
+const float TUNNEL_SLOPE = (TUNNEL_END_Y - TUNNEL_START_Y) /
+(TUNNEL_END_X - TUNNEL_START_X);
+
+// Calculate expected Y position on tunnel for any X
+float getTunnelY(float x) {
+    return TUNNEL_START_Y + TUNNEL_SLOPE * (x - TUNNEL_START_X);
+}
+
+const float SLIDE_SPEED = 0.5f;  // How fast they slide down the tunnel
+const float EXIT_WAIT_TIME = 0.5f; // Time between sprinkles exiting
 
 int endProgram(std::string message) {
     std::cout << message << std::endl;
@@ -53,6 +102,9 @@ int endProgram(std::string message) {
 void key_callback(GLFWwindow* window, int key, int scancode, int action, int mods) {
     if (key == GLFW_KEY_S && action == GLFW_PRESS) {
         leverVertical = !leverVertical;
+    }
+    if (key == GLFW_KEY_I && action == GLFW_PRESS) {  // 'I' for ice cream
+        iceCreamFlow = !iceCreamFlow;
     }
 }
 
@@ -90,19 +142,49 @@ void drawRect(unsigned int rectShader, unsigned int VAOrect, unsigned int textur
     glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
 }
 
+void spawnIceCream() {
+    if (!iceCreamFlow) return;
+
+    IceCream cream;
+
+    // Start at the pipe
+    cream.x = ICE_CREAM_PIPE_X;
+    cream.y = ICE_CREAM_PIPE_Y;
+    cream.size = ICE_CREAM_SIZE;
+    cream.active = true;
+    cream.inCup = false;
+    cream.heightInCup = 0.0f;
+    cream.angle = 0.0f;
+    cream.rotation = 0.0f;
+
+    // Vanilla ice cream color
+    cream.color[0] = 1.0f;    // R
+    cream.color[1] = 0.95f;   // G
+    cream.color[2] = 0.85f;   // B
+
+    iceCreams.push_back(cream);
+
+    // Limit ice creams
+    if (iceCreams.size() > 500) {
+        iceCreams.erase(iceCreams.begin());
+    }
+}
+
 void spawnSprinkles() {
     if (!leverVertical) return;
 
     Sprinkle sprinkle;
 
-    sprinkle.x = -0.35f;      
-    sprinkle.y = 0.08f;    
+    sprinkle.x = TUNNEL_START_X;
+    sprinkle.y = TUNNEL_START_Y + 0.1f;  // Slightly above entrance
     sprinkle.slideTimer = 0.0f;
-    sprinkle.isSliding = false;
-    sprinkle.hasFallenOff = false;
+    sprinkle.isInTunnel = false;
+    sprinkle.waitingToExit = false;
+    sprinkle.waitTimer = 0.0f;
+    sprinkle.collisionState = 0;  // Start in falling state
     sprinkle.collisionState = 0;  // Start in falling state
     // Random velocities
-    std::uniform_real_distribution<> disX(-0.05f, 0.05f);  // Less horizontal
+    std::uniform_real_distribution<> disX(-0.07f, 0.07f);  // Less horizontal
     std::uniform_real_distribution<> disY(-0.1f, -0.1f);  // More downward
     sprinkle.vx = disX(gen);
     sprinkle.vy = disY(gen);
@@ -170,15 +252,70 @@ void spawnSprinkles() {
     }
 }
 
+void updateIceCreamPhysics(double deltaTime) {
+    for (auto& cream : iceCreams) {
+        if (!cream.active) continue;
+
+        if (!cream.inCup) {
+            // Falling from pipe to cup
+            cream.y -= ICE_CREAM_FALL_SPEED * deltaTime;
+            cream.rotation += 1.0f * deltaTime; // Gentle rotation
+
+            // Check if reached cup
+            float distanceToCup = sqrt(
+                (cream.x - ICE_CREAM_CUP_X) * (cream.x - ICE_CREAM_CUP_X) +
+                (cream.y - ICE_CREAM_CUP_Y) * (cream.y - ICE_CREAM_CUP_Y)
+            );
+
+            if (cream.y <= ICE_CREAM_CUP_Y || distanceToCup <= ICE_CREAM_CUP_RADIUS) {
+                // Enter cup and start spiraling
+                cream.inCup = true;
+                cream.heightInCup = currentSpiralHeight;
+                cream.angle = currentSpiralAngle;
+
+                // Update cup position based on spiral
+                cream.cupX = ICE_CREAM_CUP_X + ICE_CREAM_SPIRAL_RADIUS * cos(cream.angle);
+                cream.cupY = cream.heightInCup;
+
+                // Update spiral parameters for next ice cream
+                currentSpiralAngle += ICE_CREAM_SPIRAL_SPEED * deltaTime;
+                if (currentSpiralAngle > 2 * M_PI) {
+                    currentSpiralAngle -= 2 * M_PI;
+                    currentSpiralHeight += cream.size * 1.5f; // Increase height
+                }
+            }
+        }
+        else {
+            // Already in cup - gentle movement in spiral
+            cream.angle += 0.1f * deltaTime; // Slow rotation in cup
+            cream.rotation += 0.5f * deltaTime;
+
+            // Slight bobbing motion for realism
+            cream.cupY = cream.heightInCup + 0.01f * sin(glfwGetTime() * 2.0f + cream.angle);
+        }
+    }
+
+    // Remove inactive ice creams
+    iceCreams.erase(
+        std::remove_if(iceCreams.begin(), iceCreams.end(),
+            [](const IceCream& c) { return !c.active; }),
+        iceCreams.end()
+    );
+}
+
 void updatePhysics(double deltaTime) {
+    static float lastExitTime = 0.0f;
+    static bool exitOccupied = false;  // Track if a sprinkle is at exit
+
     for (auto& drop : sprinkles) {
         if (!drop.active) continue;
 
-        // Store previous position for collision detection
-        float prevY = drop.y - drop.vy * deltaTime;  // Position before update
+        // Store previous position
+        float prevX = drop.x - drop.vx * deltaTime;
+        float prevY = drop.y - drop.vy * deltaTime;
 
-        // Apply gravity only if not settled
-        if (drop.collisionState < 2) {
+        // Apply gravity only if not in tunnel or settled
+        if (drop.collisionState == 0 || drop.collisionState == 2) {
             drop.vy += GRAVITY * deltaTime;
         }
 
@@ -186,87 +323,111 @@ void updatePhysics(double deltaTime) {
         drop.x += drop.vx * deltaTime;
         drop.y += drop.vy * deltaTime;
 
-        // Update rotation
-        if (drop.collisionState < 2) {
+        // Update rotation (only when falling)
+        if (drop.collisionState == 0 || drop.collisionState == 2) {
             drop.rotation += drop.rotationSpeed * deltaTime;
         }
 
-        // Check collisions based on current state
-        if (drop.collisionState == 0) {
-            // Check if we passed through the shelf this frame
-            // The sprinkle was above the shelf on previous frame and is now below/at it
-            bool wasAboveShelf = (prevY - drop.size) > SHELF_Y;
-            bool isAtOrBelowShelf = (drop.y - drop.size) <= SHELF_Y;
-            bool isWithinShelfWidth = drop.x > SHELF_START_X && drop.x < SHELF_END_X;
+        // State machine for sprinkles
+        switch (drop.collisionState) {
 
-            if (wasAboveShelf && isAtOrBelowShelf && isWithinShelfWidth) {
-                // Land on the shelf
-                drop.y = SHELF_Y + drop.size;  // Place on top of shelf
-                drop.vy = 0.0f;  // No bounce
-                drop.vx *= 0.8f; // Reduce horizontal velocity
-                drop.collisionState = 1; // Now on shelf
-                drop.isSliding = true;
+        case 0: // Initial falling
+            // Check if sprinkle hits the tunnel entrance
+            if (prevY > TUNNEL_START_Y && drop.y <= TUNNEL_START_Y + drop.size &&
+                drop.x >= TUNNEL_START_X - drop.size && drop.x <= TUNNEL_START_X + drop.size) {
+
+                // Place sprinkle at tunnel start
+                drop.x = TUNNEL_START_X;
+                drop.y = TUNNEL_START_Y + drop.size;
+                drop.vx = 0.0f;
+                drop.vy = 0.0f;
+                drop.collisionState = 1; // Enter tunnel
+                drop.isInTunnel = true;
                 drop.slideTimer = 0.0f;
 
-                // Reduce rotation
-                drop.rotationSpeed *= 0.5f;
-
-                std::cout << "Sprinkle landed on shelf at y=" << drop.y << std::endl;
+                // Only proceed if exit is not occupied
+                if (!exitOccupied) {
+                    drop.waitingToExit = false;
+                }
+                else {
+                    drop.waitingToExit = true;
+                    drop.waitTimer = 0.0f;
+                }
             }
-            // Check for final ground collision (similar logic)
-            else if ((prevY - drop.size) > FINAL_GROUND_Y &&
-                (drop.y - drop.size) <= FINAL_GROUND_Y) {
+            // Check for ice cream collision (skip tunnel)
+            else if (drop.y - drop.size <= FINAL_GROUND_Y) {
                 drop.y = FINAL_GROUND_Y + drop.size;
                 drop.vy = 0.0f;
-                drop.vx = 0.0f;  // Stop completely
+                drop.vx = 0.0f;
                 drop.rotationSpeed = 0.0f;
-                drop.collisionState = 2; // Final resting place
-                drop.isSliding = false;
-
-                std::cout << "Sprinkle landed on ground at y=" << drop.y << std::endl;
+                drop.collisionState = 3; // On ice cream
             }
-        }
-        else if (drop.collisionState == 1) {
-            // On the shelf - sliding phase
+            break;
+
+        case 1: // Sliding in tunnel
             drop.slideTimer += deltaTime;
 
-            // Apply shelf friction
-            drop.vx *= FRICTION;
+            if (drop.waitingToExit) {
+                // Wait at current position
+                drop.waitTimer += deltaTime;
 
-            // Boundary collision on shelf
-            if (drop.x - drop.size < SHELF_START_X) {
-                drop.x = SHELF_START_X + drop.size;
-                drop.vx = 0.0f;  // Stop at edge
+                // Check if exit is now free
+                if (!exitOccupied && drop.waitTimer > 0.1f) {
+                    drop.waitingToExit = false;
+                    exitOccupied = true;
+                }
             }
-            else if (drop.x + drop.size > SHELF_END_X) {
-                drop.x = SHELF_END_X - drop.size;
-                drop.vx = 0.0f;  // Stop at edge
-            }
+            else {
+                // Move along tunnel towards exit
+                if (drop.x < TUNNEL_END_X) {
+                    drop.x += SLIDE_SPEED * deltaTime;
+                    drop.y = getTunnelY(drop.x) + drop.size;
 
-            // After sliding period, fall off shelf
-            if (drop.slideTimer >= SLIDE_DURATION) {
-                drop.vx = 0.1f; // Small push outward
-                
-                drop.collisionState = 0; // Back to falling
-                drop.isSliding = false;
-                drop.hasFallenOff = true;
+                    // Check if reached exit
+                    if (drop.x >= TUNNEL_END_X) {
+                        drop.x = TUNNEL_END_X;
+                        drop.y = TUNNEL_END_Y + drop.size;
+
+                        // Wait a bit at exit, then fall
+                        drop.waitTimer += deltaTime;
+                        if (drop.waitTimer > EXIT_WAIT_TIME) {
+                            drop.collisionState = 2; // Start falling from exit
+                            drop.isInTunnel = false;
+                            exitOccupied = false; // Free the exit
+                        }
+                    }
+                }
             }
-        }
-        else if (drop.collisionState == 2) {
-            // On final ground - no movement
+            break;
+
+        case 2: // Falling from tunnel exit to ice cream
+            // Check for ice cream collision
+            if (drop.y - drop.size <= FINAL_GROUND_Y) {
+                drop.y = FINAL_GROUND_Y + drop.size;
+                drop.vy = 0.0f;
+                drop.vx = 0.0f;
+                drop.rotationSpeed = 0.0f;
+                drop.collisionState = 3; // On ice cream
+            }
+            break;
+
+        case 3: // On ice cream - no movement
             drop.vx = 0.0f;
             drop.vy = 0.0f;
             drop.rotationSpeed = 0.0f;
+            break;
         }
 
-        // Side boundaries (walls)
-        if (drop.x - drop.size < -1.0f) {
-            drop.x = -1.0f + drop.size;
-            drop.vx = 0.0f;  // No bounce, just stop
-        }
-        if (drop.x + drop.size > 1.0f) {
-            drop.x = 1.0f - drop.size;
-            drop.vx = 0.0f;  // No bounce, just stop
+        // Side boundaries (only for falling sprinkles)
+        if (drop.collisionState == 0 || drop.collisionState == 2) {
+            if (drop.x - drop.size < -1.0f) {
+                drop.x = -1.0f + drop.size;
+                drop.vx = 0.0f;
+            }
+            if (drop.x + drop.size > 1.0f) {
+                drop.x = 1.0f - drop.size;
+                drop.vx = 0.0f;
+            }
         }
 
         // Stop completely if velocities are very small
@@ -274,13 +435,13 @@ void updatePhysics(double deltaTime) {
         if (fabs(drop.vx) < 0.01f) drop.vx = 0.0f;
         if (fabs(drop.rotationSpeed) < 0.01f) drop.rotationSpeed = 0.0f;
 
-        // Deactivate if below screen (safety)
+        // Deactivate if below screen
         if (drop.y < -2.0f) {
             drop.active = false;
         }
     }
 
-    // Remove inactive sprinkles
+    // Clean up inactive sprinkles
     sprinkles.erase(
         std::remove_if(sprinkles.begin(), sprinkles.end(),
             [](const Sprinkle& d) { return !d.active; }),
@@ -288,6 +449,61 @@ void updatePhysics(double deltaTime) {
     );
 }
 
+void drawIceCream(const IceCream& cream, unsigned int shader, unsigned int VAO,
+    float screenWidth, float screenHeight) {
+    glUseProgram(shader);
+
+    // Calculate position
+    float drawX, drawY;
+    if (cream.inCup) {
+        drawX = cream.cupX;
+        drawY = cream.cupY;
+    }
+    else {
+        drawX = cream.x;
+        drawY = cream.y;
+    }
+
+    // Set uniforms
+    GLint posLoc = glGetUniformLocation(shader, "uPosition");
+    GLint sizeLoc = glGetUniformLocation(shader, "uSize");
+    GLint colorLoc = glGetUniformLocation(shader, "uColor");
+    GLint screenSizeLoc = glGetUniformLocation(shader, "uScreenSize");
+
+    if (posLoc != -1) glUniform2f(posLoc, drawX, drawY);
+    if (sizeLoc != -1) glUniform1f(sizeLoc, cream.size);
+    if (colorLoc != -1) glUniform3f(colorLoc, cream.color[0], cream.color[1], cream.color[2]);
+    if (screenSizeLoc != -1) glUniform2f(screenSizeLoc, screenWidth, screenHeight);
+
+    glBindVertexArray(VAO);
+    glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
+}
+void drawCup(unsigned int shader, unsigned int VAO) {
+    glUseProgram(shader);
+
+    // Draw cup base (simple circle)
+    int segments = 32;
+    float radius = ICE_CREAM_CUP_RADIUS;
+
+    // Draw multiple circles to create cup shape
+    for (int i = 0; i < 3; i++) {
+        float currentRadius = radius - i * 0.02f;
+        float currentY = ICE_CREAM_CUP_Y - i * 0.01f;
+
+        glBegin(GL_TRIANGLE_FAN);
+        // Cup color (light brown)
+        glColor3f(0.9f, 0.8f, 0.7f);
+        glVertex2f(ICE_CREAM_CUP_X, currentY); // Center
+
+        for (int j = 0; j <= segments; j++) {
+            float angle = j * 2.0f * M_PI / segments;
+            float x = ICE_CREAM_CUP_X + cos(angle) * currentRadius;
+            float y = currentY + sin(angle) * currentRadius * 0.5f; // Elliptical cup
+            glVertex2f(x, y);
+        }
+        glEnd();
+    }
+}
 void drawSprinkles(const Sprinkle& drop, unsigned int shader, unsigned int VAO,
     float screenWidth, float screenHeight) {
     glUseProgram(shader);
@@ -314,12 +530,12 @@ int main() {
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
-    /*GLFWmonitor* monitor = glfwGetPrimaryMonitor();
+    GLFWmonitor* monitor = glfwGetPrimaryMonitor();
     const GLFWvidmode* mode = glfwGetVideoMode(monitor);
     GLFWwindow* window = glfwCreateWindow(mode->width, mode->height, "Ice Cream Machine", monitor, NULL);
 
-   */
-    GLFWwindow* window = glfwCreateWindow(800, 800, "Vezba 2", NULL, NULL);
+   
+    //GLFWwindow* window = glfwCreateWindow(800, 800, "Vezba 2", NULL, NULL);
     int width, height;
     glfwGetWindowSize(window, &width, &height);
     if (!window) return endProgram("Failed to create window");
@@ -411,19 +627,37 @@ int main() {
             drawRect(rectShader, VAO_lever, sprinklesCloseTexture);
         }
 
+        // Draw cup (optional)
+        drawCup(rectShader, VAO_machine); // You might need a different VAO for this
+
         // Update physics
         updatePhysics(deltaTime);
 
-        // Spawn drops when lever is open
-        static double lastSpawnTime = 0.0;
-        if (leverVertical && currentTime - lastSpawnTime > 0.08f) {
+        // Update ice cream physics
+        updateIceCreamPhysics(deltaTime);
+
+        // Spawn sprinkles when lever is open
+        static double lastSprinkleSpawnTime = 0.0;
+        if (leverVertical && currentTime - lastSprinkleSpawnTime > 0.08f) {
             spawnSprinkles();
-            lastSpawnTime = currentTime;
+            lastSprinkleSpawnTime = currentTime;
         }
 
-        // Draw all ice cream drops
+        // Spawn ice cream continuously when flow is on
+        static double lastIceCreamSpawnTime = 0.0;
+        if (iceCreamFlow && currentTime - lastIceCreamSpawnTime > 0.05f) {
+            spawnIceCream();
+            lastIceCreamSpawnTime = currentTime;
+        }
+
+        // Draw all sprinkles
         for (const auto& drop : sprinkles) {
-            drawSprinkles(drop, particleShader, particleVAO, height, width);
+            drawSprinkles(drop, particleShader, particleVAO, width, height);
+        }
+
+        // Draw all ice cream
+        for (const auto& cream : iceCreams) {
+            drawIceCream(cream, particleShader, particleVAO, width, height);
         }
 
         glfwSwapBuffers(window);
