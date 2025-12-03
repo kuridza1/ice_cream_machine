@@ -1,0 +1,14 @@
+﻿  Main.cpp
+C:\Users\Jovana\Desktop\Fakultet\Računarska grafika\IceCreamMaker\Main.cpp(107,23): warning C4244: '=': conversion from 'double' to 'float', possible loss of data
+C:\Users\Jovana\Desktop\Fakultet\Računarska grafika\IceCreamMaker\Main.cpp(108,23): warning C4244: '=': conversion from 'double' to 'float', possible loss of data
+C:\Users\Jovana\Desktop\Fakultet\Računarska grafika\IceCreamMaker\Main.cpp(112,28): warning C4244: '=': conversion from 'double' to 'float', possible loss of data
+C:\Users\Jovana\Desktop\Fakultet\Računarska grafika\IceCreamMaker\Main.cpp(117,41): warning C4244: '=': conversion from 'double' to 'float', possible loss of data
+C:\Users\Jovana\Desktop\Fakultet\Računarska grafika\IceCreamMaker\Main.cpp(178,21): warning C4244: 'initializing': conversion from 'double' to 'float', possible loss of data
+C:\Users\Jovana\Desktop\Fakultet\Računarska grafika\IceCreamMaker\Main.cpp(182,32): warning C4244: '+=': conversion from 'double' to 'float', possible loss of data
+C:\Users\Jovana\Desktop\Fakultet\Računarska grafika\IceCreamMaker\Main.cpp(186,27): warning C4244: '+=': conversion from 'double' to 'float', possible loss of data
+C:\Users\Jovana\Desktop\Fakultet\Računarska grafika\IceCreamMaker\Main.cpp(187,27): warning C4244: '+=': conversion from 'double' to 'float', possible loss of data
+C:\Users\Jovana\Desktop\Fakultet\Računarska grafika\IceCreamMaker\Main.cpp(191,49): warning C4244: '+=': conversion from 'double' to 'float', possible loss of data
+C:\Users\Jovana\Desktop\Fakultet\Računarska grafika\IceCreamMaker\Main.cpp(231,32): warning C4244: '+=': conversion from 'double' to 'float', possible loss of data
+C:\Users\Jovana\Desktop\Fakultet\Računarska grafika\IceCreamMaker\Main.cpp(426,70): warning C4244: 'argument': conversion from 'int' to 'float', possible loss of data
+C:\Users\Jovana\Desktop\Fakultet\Računarska grafika\IceCreamMaker\Main.cpp(426,62): warning C4244: 'argument': conversion from 'int' to 'float', possible loss of data
+  IceCreamMaker.vcxproj -> C:\Users\Jovana\Desktop\Fakultet\Računarska grafika\IceCreamMaker\x64\Debug\IceCreamMaker.exe
