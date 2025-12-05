@@ -1,28 +1,18 @@
 ﻿  Main.cpp
-C:\Users\Jovana\Desktop\Fakultet\Računarska grafika\ice_cream_machine\IceCreamMaker\Main.cpp(189,23): warning C4244: '=': conversion from 'double' to 'float', possible loss of data
-C:\Users\Jovana\Desktop\Fakultet\Računarska grafika\ice_cream_machine\IceCreamMaker\Main.cpp(190,23): warning C4244: '=': conversion from 'double' to 'float', possible loss of data
-C:\Users\Jovana\Desktop\Fakultet\Računarska grafika\ice_cream_machine\IceCreamMaker\Main.cpp(194,28): warning C4244: '=': conversion from 'double' to 'float', possible loss of data
-C:\Users\Jovana\Desktop\Fakultet\Računarska grafika\ice_cream_machine\IceCreamMaker\Main.cpp(199,41): warning C4244: '=': conversion from 'double' to 'float', possible loss of data
-C:\Users\Jovana\Desktop\Fakultet\Računarska grafika\ice_cream_machine\IceCreamMaker\Main.cpp(261,45): warning C4244: '-=': conversion from 'double' to 'float', possible loss of data
-C:\Users\Jovana\Desktop\Fakultet\Računarska grafika\ice_cream_machine\IceCreamMaker\Main.cpp(262,36): warning C4244: '+=': conversion from 'double' to 'float', possible loss of data
-C:\Users\Jovana\Desktop\Fakultet\Računarska grafika\ice_cream_machine\IceCreamMaker\Main.cpp(281,62): warning C4244: '+=': conversion from 'double' to 'float', possible loss of data
-C:\Users\Jovana\Desktop\Fakultet\Računarska grafika\ice_cream_machine\IceCreamMaker\Main.cpp(283,45): warning C4305: '-=': truncation from 'double' to 'float'
-C:\Users\Jovana\Desktop\Fakultet\Računarska grafika\ice_cream_machine\IceCreamMaker\Main.cpp(290,33): warning C4244: '+=': conversion from 'double' to 'float', possible loss of data
-C:\Users\Jovana\Desktop\Fakultet\Računarska grafika\ice_cream_machine\IceCreamMaker\Main.cpp(291,36): warning C4244: '+=': conversion from 'double' to 'float', possible loss of data
-C:\Users\Jovana\Desktop\Fakultet\Računarska grafika\ice_cream_machine\IceCreamMaker\Main.cpp(294,44): warning C4244: '=': conversion from 'double' to 'float', possible loss of data
-C:\Users\Jovana\Desktop\Fakultet\Računarska grafika\ice_cream_machine\IceCreamMaker\Main.cpp(314,21): warning C4244: 'initializing': conversion from 'double' to 'float', possible loss of data
-C:\Users\Jovana\Desktop\Fakultet\Računarska grafika\ice_cream_machine\IceCreamMaker\Main.cpp(315,21): warning C4244: 'initializing': conversion from 'double' to 'float', possible loss of data
-C:\Users\Jovana\Desktop\Fakultet\Računarska grafika\ice_cream_machine\IceCreamMaker\Main.cpp(319,32): warning C4244: '+=': conversion from 'double' to 'float', possible loss of data
-C:\Users\Jovana\Desktop\Fakultet\Računarska grafika\ice_cream_machine\IceCreamMaker\Main.cpp(323,27): warning C4244: '+=': conversion from 'double' to 'float', possible loss of data
-C:\Users\Jovana\Desktop\Fakultet\Računarska grafika\ice_cream_machine\IceCreamMaker\Main.cpp(324,27): warning C4244: '+=': conversion from 'double' to 'float', possible loss of data
-C:\Users\Jovana\Desktop\Fakultet\Računarska grafika\ice_cream_machine\IceCreamMaker\Main.cpp(328,49): warning C4244: '+=': conversion from 'double' to 'float', possible loss of data
-C:\Users\Jovana\Desktop\Fakultet\Računarska grafika\ice_cream_machine\IceCreamMaker\Main.cpp(368,32): warning C4244: '+=': conversion from 'double' to 'float', possible loss of data
-C:\Users\Jovana\Desktop\Fakultet\Računarska grafika\ice_cream_machine\IceCreamMaker\Main.cpp(372,35): warning C4244: '+=': conversion from 'double' to 'float', possible loss of data
-C:\Users\Jovana\Desktop\Fakultet\Računarska grafika\ice_cream_machine\IceCreamMaker\Main.cpp(383,43): warning C4244: '+=': conversion from 'double' to 'float', possible loss of data
-C:\Users\Jovana\Desktop\Fakultet\Računarska grafika\ice_cream_machine\IceCreamMaker\Main.cpp(392,43): warning C4244: '+=': conversion from 'double' to 'float', possible loss of data
-C:\Users\Jovana\Desktop\Fakultet\Računarska grafika\ice_cream_machine\IceCreamMaker\Main.cpp(499,25): warning C4244: 'initializing': conversion from 'double' to 'float', possible loss of data
-C:\Users\Jovana\Desktop\Fakultet\Računarska grafika\ice_cream_machine\IceCreamMaker\Main.cpp(655,69): warning C4244: 'argument': conversion from 'int' to 'float', possible loss of data
-C:\Users\Jovana\Desktop\Fakultet\Računarska grafika\ice_cream_machine\IceCreamMaker\Main.cpp(655,62): warning C4244: 'argument': conversion from 'int' to 'float', possible loss of data
-C:\Users\Jovana\Desktop\Fakultet\Računarska grafika\ice_cream_machine\IceCreamMaker\Main.cpp(660,69): warning C4244: 'argument': conversion from 'int' to 'float', possible loss of data
-C:\Users\Jovana\Desktop\Fakultet\Računarska grafika\ice_cream_machine\IceCreamMaker\Main.cpp(660,62): warning C4244: 'argument': conversion from 'int' to 'float', possible loss of data
+  Sprinkles.cpp
+C:\Users\Jovana\Desktop\Fakultet\Računarska grafika\ice_cream_machine\IceCreamMaker\Sprinkles.cpp(54,23): warning C4244: '=': conversion from 'double' to 'float', possible loss of data
+C:\Users\Jovana\Desktop\Fakultet\Računarska grafika\ice_cream_machine\IceCreamMaker\Sprinkles.cpp(55,23): warning C4244: '=': conversion from 'double' to 'float', possible loss of data
+C:\Users\Jovana\Desktop\Fakultet\Računarska grafika\ice_cream_machine\IceCreamMaker\Sprinkles.cpp(59,28): warning C4244: '=': conversion from 'double' to 'float', possible loss of data
+C:\Users\Jovana\Desktop\Fakultet\Računarska grafika\ice_cream_machine\IceCreamMaker\Sprinkles.cpp(64,41): warning C4244: '=': conversion from 'double' to 'float', possible loss of data
+C:\Users\Jovana\Desktop\Fakultet\Računarska grafika\ice_cream_machine\IceCreamMaker\Sprinkles.cpp(124,21): warning C4244: 'initializing': conversion from 'double' to 'float', possible loss of data
+C:\Users\Jovana\Desktop\Fakultet\Računarska grafika\ice_cream_machine\IceCreamMaker\Sprinkles.cpp(125,21): warning C4244: 'initializing': conversion from 'double' to 'float', possible loss of data
+C:\Users\Jovana\Desktop\Fakultet\Računarska grafika\ice_cream_machine\IceCreamMaker\Sprinkles.cpp(129,32): warning C4244: '+=': conversion from 'double' to 'float', possible loss of data
+C:\Users\Jovana\Desktop\Fakultet\Računarska grafika\ice_cream_machine\IceCreamMaker\Sprinkles.cpp(133,27): warning C4244: '+=': conversion from 'double' to 'float', possible loss of data
+C:\Users\Jovana\Desktop\Fakultet\Računarska grafika\ice_cream_machine\IceCreamMaker\Sprinkles.cpp(134,27): warning C4244: '+=': conversion from 'double' to 'float', possible loss of data
+C:\Users\Jovana\Desktop\Fakultet\Računarska grafika\ice_cream_machine\IceCreamMaker\Sprinkles.cpp(138,49): warning C4244: '+=': conversion from 'double' to 'float', possible loss of data
+C:\Users\Jovana\Desktop\Fakultet\Računarska grafika\ice_cream_machine\IceCreamMaker\Sprinkles.cpp(177,32): warning C4244: '+=': conversion from 'double' to 'float', possible loss of data
+C:\Users\Jovana\Desktop\Fakultet\Računarska grafika\ice_cream_machine\IceCreamMaker\Sprinkles.cpp(181,35): warning C4244: '+=': conversion from 'double' to 'float', possible loss of data
+C:\Users\Jovana\Desktop\Fakultet\Računarska grafika\ice_cream_machine\IceCreamMaker\Sprinkles.cpp(192,43): warning C4244: '+=': conversion from 'double' to 'float', possible loss of data
+C:\Users\Jovana\Desktop\Fakultet\Računarska grafika\ice_cream_machine\IceCreamMaker\Sprinkles.cpp(201,43): warning C4244: '+=': conversion from 'double' to 'float', possible loss of data
+  Generating Code...
   IceCreamMaker.vcxproj -> C:\Users\Jovana\Desktop\Fakultet\Računarska grafika\ice_cream_machine\IceCreamMaker\x64\Debug\IceCreamMaker.exe
