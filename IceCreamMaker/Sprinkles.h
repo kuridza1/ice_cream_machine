@@ -21,7 +21,7 @@ struct Sprinkle {
 
 // Declare extern for global variables
 extern std::vector<Sprinkle> sprinkles;
-extern bool leverVertical;
+extern bool sprinklesOpen;
 extern std::mt19937 gen;
 
 // Constants

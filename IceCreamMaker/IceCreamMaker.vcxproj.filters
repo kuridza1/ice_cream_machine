@@ -61,5 +61,14 @@
     <Image Include="res\sprinklesClose.png">
       <Filter>Resource Files</Filter>
     </Image>
+    <Image Include="res\handle.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="res\lever.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="res\iceCreamVanilla.png">
+      <Filter>Resource Files</Filter>
+    </Image>
   </ItemGroup>
 </Project>

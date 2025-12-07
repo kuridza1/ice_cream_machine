@@ -8,7 +8,7 @@
 
 // Define global variables
 std::vector<Sprinkle> sprinkles;
-bool leverVertical = false;
+bool sprinklesOpen = false;
 std::random_device rd;
 std::mt19937 gen(rd());
 
@@ -36,7 +36,7 @@ float getTunnelY(float x) {
 }
 
 void spawnSprinkles() {
-    if (!leverVertical) return;
+    if (!sprinklesOpen) return;
 
     Sprinkle sprinkle;
 

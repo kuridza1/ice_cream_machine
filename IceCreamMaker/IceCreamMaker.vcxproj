@@ -146,6 +146,9 @@
     <None Include="rect.vert" />
   </ItemGroup>
   <ItemGroup>
+    <Image Include="res\handle.png" />
+    <Image Include="res\iceCreamVanilla.png" />
+    <Image Include="res\lever.png" />
     <Image Include="res\machine.png" />
     <Image Include="res\sprinklesClose.png" />
     <Image Include="res\sprinklesOpen.png" />

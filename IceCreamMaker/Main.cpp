@@ -6,8 +6,33 @@
 
 // Texture IDs
 unsigned machineTexture;
+unsigned leverVerticalTexture;
+unsigned leverHorizontalTexture;
 unsigned sprinklesOpenTexture;
 unsigned sprinklesCloseTexture;
+unsigned iceCreamVanillaTexture;
+
+// Lever state variables
+bool vanilla = false;
+bool mixed = false;
+bool chocolate = false;
+float leverPositionVanilla = 1.0f;
+float leverPositionMixed = 1.0f;
+float leverPositionChocolate = 1.0f;
+
+const float leverSpeed = 2.0f; 
+
+
+float vanillaHeight = 0.0f;
+float chocolateHeight = 0.0f;
+float mixedHeight = 0.0f;
+float vanillaPosY = 0.0f;
+float chocolatePosY = 0.0f;
+float mixedPosY = 0.0f;
+bool vanillaSettling = false;
+bool chocolateSettling = false;
+bool mixedSettling = false;
+
 
 // Global variables
 double lastUpdateTime = 0.0;
@@ -20,8 +45,28 @@ int endProgram(std::string message) {
 
 void key_callback(GLFWwindow* window, int key, int scancode, int action, int mods) {
     if (key == GLFW_KEY_S && action == GLFW_PRESS) {
-        leverVertical = !leverVertical;
+        sprinklesOpen = !sprinklesOpen;
     }
+    if (key == GLFW_KEY_1 && action == GLFW_PRESS) {
+        vanilla = !vanilla;
+        if (!vanilla) {
+            vanillaSettling = true;
+        }
+    }
+    if (key == GLFW_KEY_2 && action == GLFW_PRESS) {
+        chocolate = !chocolate;
+        if (!chocolate) {
+            chocolateSettling = true;
+        }
+    }
+    if (key == GLFW_KEY_SPACE && action == GLFW_PRESS) {
+        mixed = !mixed;
+        if (!mixed) {
+            mixedSettling = true;
+        }
+    }
+
+
 }
 
 void preprocessTexture(unsigned& texture, const char* filepath) {
@@ -49,13 +94,43 @@ void formVAOs(float* verticesRect, size_t rectSize, unsigned int& VAOrect) {
     glEnableVertexAttribArray(1);
 }
 
-void drawRect(unsigned int rectShader, unsigned int VAOrect, unsigned int textureID) {
+void drawRect(unsigned int rectShader, unsigned int VAOrect, unsigned int textureID,
+    float posX = 0.0f, float posY = 0.0f, float scaleX = 1.0f, float scaleY = 1.0f) {
     glUseProgram(rectShader);
+
+    // Set uniforms
+    glUniform2f(glGetUniformLocation(rectShader, "uTranslation"), posX, posY);
+    glUniform2f(glGetUniformLocation(rectShader, "uScale"), scaleX, scaleY);
+
+    // Bind texture and draw
     glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D, textureID);
     glUniform1i(glGetUniformLocation(rectShader, "uTex"), 0);
+
     glBindVertexArray(VAOrect);
     glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
+}
+
+void iceCreamLever(int type, float leverPosition, unsigned int rectShader, unsigned int VAO_leverVertical,
+    unsigned int VAO_leverHorizontal) {
+
+    float verticalScaleY = 1.0f - leverPosition * 0.7f;
+    float verticalPosY = (1.0f - verticalScaleY) * 0.5f;
+    float horizontalPosY = leverPosition * -0.23f;
+    float positionX =0.0f;
+    switch (type) {
+    case 1:
+        positionX = 0.0f;
+        break;
+    case 2:        
+        positionX = 0.16f;
+        break;
+    case 3:
+        positionX = 0.31f;
+        break;
+    }
+    drawRect(rectShader, VAO_leverVertical, leverVerticalTexture, positionX, verticalPosY, 1.0f, verticalScaleY);
+    drawRect(rectShader, VAO_leverHorizontal, leverHorizontalTexture, positionX, horizontalPosY, 1.0f, 1.0f);
 }
 
 int main() {
@@ -67,10 +142,6 @@ int main() {
     GLFWmonitor* monitor = glfwGetPrimaryMonitor();
     const GLFWvidmode* mode = glfwGetVideoMode(monitor);
     GLFWwindow* window = glfwCreateWindow(mode->width, mode->height, "Ice Cream Machine", monitor, NULL);
-    
-    //GLFWwindow* window = glfwCreateWindow(800, 800, "Ice Cream Machine", NULL, NULL);
-    int width, height;
-    glfwGetWindowSize(window, &width, &height);
 
     if (!window) return endProgram("Failed to create window");
 
@@ -87,8 +158,11 @@ int main() {
 
     // Load textures
     preprocessTexture(machineTexture, "res/machine.png");
+    preprocessTexture(leverVerticalTexture, "res/lever.png");
+    preprocessTexture(leverHorizontalTexture, "res/handle.png"); 
     preprocessTexture(sprinklesCloseTexture, "res/sprinklesClose.png");
     preprocessTexture(sprinklesOpenTexture, "res/sprinklesOpen.png");
+    preprocessTexture(iceCreamVanillaTexture, "res/iceCreamVanilla.png");
 
     // Create shaders
     unsigned int rectShader = createShader("rect.vert", "rect.frag");
@@ -97,8 +171,7 @@ int main() {
     unsigned int particleShader = createShader("particle.vert", "particle.frag");
     if (particleShader == 0) return endProgram("Failed to create particle shader");
 
-    // Create VAOs
-    unsigned int VAO_machine, VAO_lever;
+    unsigned int VAO_machine, VAO_leverVertical, VAO_leverHorizontal, VAO_sprinklesLever, VAO_iceCreamVanilla;
 
     float machineRect[] = {
         -1.0f,  1.0f,   0.0f, 1.0f,
@@ -107,18 +180,36 @@ int main() {
          1.0f,  1.0f,   1.0f, 1.0f
     };
 
-    float leverRect[] = {
+    float leverVerticalRect[] = {
         -1.0f,  1.0f,   0.0f, 1.0f,
         -1.0f, -1.0f,   0.0f, 0.0f,
          1.0f, -1.0f,   1.0f, 0.0f,
          1.0f,  1.0f,   1.0f, 1.0f
     };
 
-    formVAOs(machineRect, sizeof(machineRect), VAO_machine);
-    formVAOs(leverRect, sizeof(leverRect), VAO_lever);
+    float leverHorizontalRect[] = {
+        -1.0f,  1.0f,   0.0f, 1.0f,
+        -1.0f, -1.0f,   0.0f, 0.0f,
+         1.0f, -1.0f,   1.0f, 0.0f,
+         1.0f,  1.0f,   1.0f, 1.0f
+    };
 
-    // Create particle VAO
+    float sprinklesLeverRect[] = {
+        -1.0f,  1.0f,   0.0f, 1.0f,
+        -1.0f, -1.0f,   0.0f, 0.0f,
+         1.0f, -1.0f,   1.0f, 0.0f,
+         1.0f,  1.0f,   1.0f, 1.0f
+        };
+
+    formVAOs(machineRect, sizeof(machineRect), VAO_machine);
+    formVAOs(leverVerticalRect, sizeof(leverVerticalRect), VAO_leverVertical);
+    formVAOs(leverHorizontalRect, sizeof(leverHorizontalRect), VAO_leverHorizontal);
+    formVAOs(sprinklesLeverRect, sizeof(sprinklesLeverRect), VAO_sprinklesLever);
+    formVAOs(machineRect, sizeof(machineRect), VAO_iceCreamVanilla);
+
     unsigned int particleVAO, particleVBO;
+    int width, height;
+    glfwGetWindowSize(window, &width, &height);
     float aspect = (float)width / height;
 
     float particleVertices[] = {
@@ -127,7 +218,6 @@ int main() {
          0.5f / aspect,  0.5f,  1.0f, 1.0f,
         -0.5f / aspect,  0.5f,  0.0f, 1.0f
     };
-
 
     glGenVertexArrays(1, &particleVAO);
     glGenBuffers(1, &particleVBO);
@@ -140,7 +230,6 @@ int main() {
     glEnableVertexAttribArray(1);
     glBindVertexArray(0);
 
-
     glClearColor(0.5f, 0.6f, 1.0f, 1.0f);
     lastUpdateTime = glfwGetTime();
 
@@ -148,26 +237,104 @@ int main() {
         double currentTime = glfwGetTime();
         double deltaTime = currentTime - lastUpdateTime;
         lastUpdateTime = currentTime;
+        if (vanilla && leverPositionVanilla < 1.0f) {
+            leverPositionVanilla += leverSpeed * deltaTime;
+            if (leverPositionVanilla > 1.0f) leverPositionVanilla = 1.0f;
+        }
+        else if (!vanilla && leverPositionVanilla > 0.0f) {
+            leverPositionVanilla -= leverSpeed * deltaTime;
+            if (leverPositionVanilla < 0.0f) leverPositionVanilla = 0.0f;
+        }
+        if (chocolate && leverPositionChocolate < 1.0f) {
+            leverPositionChocolate += leverSpeed * deltaTime;
+            if (leverPositionChocolate > 1.0f) leverPositionChocolate = 1.0f;
+        }
+        else if (!chocolate && leverPositionChocolate > 0.0f) {
+            leverPositionChocolate -= leverSpeed * deltaTime;
+            if (leverPositionChocolate < 0.0f) leverPositionChocolate = 0.0f;
+        }
+        if (mixed && leverPositionMixed < 1.0f) {
+            leverPositionMixed += leverSpeed * deltaTime;
+            if (leverPositionMixed > 1.0f) leverPositionMixed = 1.0f;
+        }
+        else if (!mixed && leverPositionMixed > 0.0f) {
+            leverPositionMixed -= leverSpeed * deltaTime;
+            if (leverPositionMixed < 0.0f) leverPositionMixed = 0.0f;
+        }
 
+        
         glClear(GL_COLOR_BUFFER_BIT);
 
-        // Draw machine
-        drawRect(rectShader, VAO_machine, machineTexture);
+        // Draw machine (full screen)
+        drawRect(rectShader, VAO_machine, machineTexture, 0.0f, 0.0f, 1.0f, 1.0f);
+        iceCreamLever(1, leverPositionVanilla, rectShader, VAO_leverVertical, VAO_leverHorizontal);
+        iceCreamLever(2, leverPositionMixed, rectShader, VAO_leverVertical, VAO_leverHorizontal);
+        iceCreamLever(3, leverPositionChocolate, rectShader, VAO_leverVertical, VAO_leverHorizontal);
 
-        // Draw lever
-        if (leverVertical) {
-            drawRect(rectShader, VAO_lever, sprinklesOpenTexture);
+        if (vanilla) {
+            vanillaHeight += 0.5f * deltaTime;
+            if (vanillaHeight > 1.0f) vanillaHeight = 1.0f;
+        }
+        else if (vanillaSettling) {
+            vanillaPosY -= 2.0f * deltaTime;
+            if (vanillaPosY < -1.5f) {
+                vanillaSettling = false;
+                vanillaHeight = 0.0f;
+                vanillaPosY = 0.0f;
+            }
         }
         else {
-            drawRect(rectShader, VAO_lever, sprinklesCloseTexture);
+            vanillaHeight = 0.0f;
+        }
+        if (chocolate) {
+            chocolateHeight += 0.5f * deltaTime;
+            if (chocolateHeight > 1.0f) chocolateHeight = 1.0f;
+        }
+        else if (chocolateSettling) {
+            chocolatePosY -= 2.0f * deltaTime;
+            if (chocolatePosY < -1.5f) {
+                chocolateSettling = false;
+                chocolateHeight = 0.0f;
+                chocolatePosY = 0.0f;
+            }
+        }
+        else {
+            chocolateHeight = 0.0f;
+        }
+        if (mixed) {
+            mixedHeight += 0.5f * deltaTime;
+            if (mixedHeight > 1.0f) mixedHeight = 1.0f;
+        }
+        else if (mixedSettling) {
+            mixedPosY -= 2.0f * deltaTime;
+            if (mixedPosY < -1.5f) {
+                mixedSettling = false;
+                mixedHeight = 0.0f;
+                mixedPosY = 0.0f;
+            }
+        }
+        else {
+            mixedHeight = 0.0f;
+        }
+        if (vanillaHeight > 0.0f || vanillaSettling) {
+            float drawY = vanillaSettling ? vanillaPosY : (0.8f - vanillaHeight * 0.5f);
+            drawRect(rectShader, VAO_iceCreamVanilla, iceCreamVanillaTexture, -0.3f, drawY, 1.0f, vanillaHeight);
+        }
+
+
+        if (sprinklesOpen) {
+            drawRect(rectShader, VAO_sprinklesLever, sprinklesOpenTexture, 0.0f, 0.0f, 1.0f, 1.0f);
+        }
+        else {
+            drawRect(rectShader, VAO_sprinklesLever, sprinklesCloseTexture, 0.0f, 0.0f, 1.0f, 1.0f);
         }
 
         // Update physics
         updateSprinklesPhysics(deltaTime);
 
-        // Spawn sprinkles when lever is open
+        // Spawn sprinkles when lever is down
         static double lastSprinkleSpawnTime = 0.0;
-        if (leverVertical && currentTime - lastSprinkleSpawnTime > 0.08f) {
+        if (sprinklesOpen > 0.5f && currentTime - lastSprinkleSpawnTime > 0.08f) {
             spawnSprinkles();
             lastSprinkleSpawnTime = currentTime;
         }
@@ -183,6 +350,10 @@ int main() {
 
     glDeleteProgram(rectShader);
     glDeleteProgram(particleShader);
+    glDeleteVertexArrays(1, &VAO_machine);
+    glDeleteVertexArrays(1, &VAO_leverVertical);
+    glDeleteVertexArrays(1, &VAO_leverHorizontal);
+
     glfwDestroyWindow(window);
     glfwTerminate();
     return 0;
