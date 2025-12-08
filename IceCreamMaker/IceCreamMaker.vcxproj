@@ -146,7 +146,8 @@
     <None Include="rect.vert" />
   </ItemGroup>
   <ItemGroup>
-    <Image Include="res\cup.png" />
+    <Image Include="res\cupBack.png" />
+    <Image Include="res\cupFront.png" />
     <Image Include="res\handle.png" />
     <Image Include="res\iceCreamVanilla.png" />
     <Image Include="res\lever.png" />

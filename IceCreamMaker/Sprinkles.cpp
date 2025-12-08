@@ -13,7 +13,7 @@ std::random_device rd;
 std::mt19937 gen(rd());
 
 // Constants
-const float GRAVITY = -2.0f;
+const float GRAVITYS = -2.0f;
 const float DAMPING = 0.3f;
 const float FRICTION = 0.85f;
 const float FINAL_GROUND_Y = -0.3f;
@@ -126,7 +126,7 @@ void updateSprinklesPhysics(double deltaTime) {
 
         // Apply gravity only if not in tunnel or settled
         if (drop.collisionState == 0 || drop.collisionState == 2) {
-            drop.vy += GRAVITY * deltaTime;
+            drop.vy += GRAVITYS * deltaTime;
         }
 
         // Update position

@@ -25,7 +25,7 @@ extern bool sprinklesOpen;
 extern std::mt19937 gen;
 
 // Constants
-extern const float GRAVITY;
+extern const float GRAVITS;
 extern const float DAMPING;
 extern const float FRICTION;
 extern const float FINAL_GROUND_Y;
