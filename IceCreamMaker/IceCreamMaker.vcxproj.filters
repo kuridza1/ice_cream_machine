@@ -70,5 +70,8 @@
     <Image Include="res\iceCreamVanilla.png">
       <Filter>Resource Files</Filter>
     </Image>
+    <Image Include="res\vanillaPour.png">
+      <Filter>Resource Files</Filter>
+    </Image>
   </ItemGroup>
 </Project>

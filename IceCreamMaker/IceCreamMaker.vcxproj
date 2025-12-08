@@ -152,6 +152,7 @@
     <Image Include="res\machine.png" />
     <Image Include="res\sprinklesClose.png" />
     <Image Include="res\sprinklesOpen.png" />
+    <Image Include="res\vanillaPour.png" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

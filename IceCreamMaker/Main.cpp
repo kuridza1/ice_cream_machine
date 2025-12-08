@@ -1,6 +1,7 @@
 ﻿#include <GL/glew.h>
 #include <GLFW/glfw3.h>
 #include <iostream>
+#include <vector>
 #include "Util.h"
 #include "Sprinkles.h"
 
@@ -20,19 +21,31 @@ float leverPositionVanilla = 1.0f;
 float leverPositionMixed = 1.0f;
 float leverPositionChocolate = 1.0f;
 
-const float leverSpeed = 2.0f; 
+const float leverSpeed = 2.0f;
 
+// Ice cream layer structure
+struct IceCreamLayer {
+    float height = 0.0f;
+    float posY = 0.0f;
+    bool isActive = false;
+    bool isSettling = false;
+    float startPosY = 0.0f; // Starting Y position for this layer
+};
 
-float vanillaHeight = 0.0f;
-float chocolateHeight = 0.0f;
-float mixedHeight = 0.0f;
-float vanillaPosY = 0.0f;
-float chocolatePosY = 0.0f;
-float mixedPosY = 0.0f;
-bool vanillaSettling = false;
-bool chocolateSettling = false;
-bool mixedSettling = false;
+// Store multiple ice cream layers
+std::vector<IceCreamLayer> vanillaLayers;
+std::vector<IceCreamLayer> chocolateLayers;
+std::vector<IceCreamLayer> mixedLayers;
 
+// Current pouring states
+bool vanillaPouring = false;
+bool chocolatePouring = false;
+bool mixedPouring = false;
+bool vanillaPourActive = false;
+float vanillaPourHeight = 0.0f;
+float vanillaPourSpeed = 0.5f; // Adjust speed as needed
+float currentVanillaPourHeight = 0.0f;
+float currentVanillaPourPosY = 0.0f;
 
 // Global variables
 double lastUpdateTime = 0.0;
@@ -49,24 +62,21 @@ void key_callback(GLFWwindow* window, int key, int scancode, int action, int mod
     }
     if (key == GLFW_KEY_1 && action == GLFW_PRESS) {
         vanilla = !vanilla;
-        if (!vanilla) {
-            vanillaSettling = true;
+        vanillaPourActive = vanilla;
+
+        // Reset pour height when starting
+        if (vanilla) {
+            vanillaPourHeight = 0.0f;
         }
     }
     if (key == GLFW_KEY_2 && action == GLFW_PRESS) {
         chocolate = !chocolate;
-        if (!chocolate) {
-            chocolateSettling = true;
-        }
+        chocolatePouring = chocolate;
     }
     if (key == GLFW_KEY_SPACE && action == GLFW_PRESS) {
         mixed = !mixed;
-        if (!mixed) {
-            mixedSettling = true;
-        }
+        mixedPouring = mixed;
     }
-
-
 }
 
 void preprocessTexture(unsigned& texture, const char* filepath) {
@@ -117,12 +127,12 @@ void iceCreamLever(int type, float leverPosition, unsigned int rectShader, unsig
     float verticalScaleY = 1.0f - leverPosition * 0.7f;
     float verticalPosY = (1.0f - verticalScaleY) * 0.5f;
     float horizontalPosY = leverPosition * -0.23f;
-    float positionX =0.0f;
+    float positionX = 0.0f;
     switch (type) {
     case 1:
         positionX = 0.0f;
         break;
-    case 2:        
+    case 2:
         positionX = 0.16f;
         break;
     case 3:
@@ -159,10 +169,10 @@ int main() {
     // Load textures
     preprocessTexture(machineTexture, "res/machine.png");
     preprocessTexture(leverVerticalTexture, "res/lever.png");
-    preprocessTexture(leverHorizontalTexture, "res/handle.png"); 
+    preprocessTexture(leverHorizontalTexture, "res/handle.png");
     preprocessTexture(sprinklesCloseTexture, "res/sprinklesClose.png");
     preprocessTexture(sprinklesOpenTexture, "res/sprinklesOpen.png");
-    preprocessTexture(iceCreamVanillaTexture, "res/iceCreamVanilla.png");
+    preprocessTexture(iceCreamVanillaTexture, "res/vanillaPour.png");
 
     // Create shaders
     unsigned int rectShader = createShader("rect.vert", "rect.frag");
@@ -199,7 +209,7 @@ int main() {
         -1.0f, -1.0f,   0.0f, 0.0f,
          1.0f, -1.0f,   1.0f, 0.0f,
          1.0f,  1.0f,   1.0f, 1.0f
-        };
+    };
 
     formVAOs(machineRect, sizeof(machineRect), VAO_machine);
     formVAOs(leverVerticalRect, sizeof(leverVerticalRect), VAO_leverVertical);
@@ -230,13 +240,20 @@ int main() {
     glEnableVertexAttribArray(1);
     glBindVertexArray(0);
 
-    glClearColor(0.5f, 0.6f, 1.0f, 1.0f);
+    glClearColor(0.392156862745098f, 0.4470588235294118f, 0.4901960784313725f, 1.0f);
     lastUpdateTime = glfwGetTime();
+
+    const float MAX_POUR_HEIGHT = 0.8f; // Max height before creating a new layer
+    const float POUR_SPEED = 0.5f;
+    const float SETTLE_SPEED = 2.0f;
+    const float CUP_BOTTOM = -0.5f; // Where settled layers accumulate
 
     while (!glfwWindowShouldClose(window)) {
         double currentTime = glfwGetTime();
         double deltaTime = currentTime - lastUpdateTime;
         lastUpdateTime = currentTime;
+
+        // Update lever positions
         if (vanilla && leverPositionVanilla < 1.0f) {
             leverPositionVanilla += leverSpeed * deltaTime;
             if (leverPositionVanilla > 1.0f) leverPositionVanilla = 1.0f;
@@ -262,65 +279,25 @@ int main() {
             if (leverPositionMixed < 0.0f) leverPositionMixed = 0.0f;
         }
 
-        
+        if (vanillaPourActive) {
+            vanillaPourHeight += vanillaPourSpeed * deltaTime;
+            // Keep growing indefinitely while active
+        }
+
         glClear(GL_COLOR_BUFFER_BIT);
 
+        if (vanillaPourHeight > 0.0f) {
+            drawRect(rectShader, VAO_iceCreamVanilla, iceCreamVanillaTexture,
+                0.0f, 0.5f, 1.0f, vanillaPourHeight);
+        }
         // Draw machine (full screen)
         drawRect(rectShader, VAO_machine, machineTexture, 0.0f, 0.0f, 1.0f, 1.0f);
         iceCreamLever(1, leverPositionVanilla, rectShader, VAO_leverVertical, VAO_leverHorizontal);
         iceCreamLever(2, leverPositionMixed, rectShader, VAO_leverVertical, VAO_leverHorizontal);
         iceCreamLever(3, leverPositionChocolate, rectShader, VAO_leverVertical, VAO_leverHorizontal);
 
-        if (vanilla) {
-            vanillaHeight += 0.5f * deltaTime;
-            if (vanillaHeight > 1.0f) vanillaHeight = 1.0f;
-        }
-        else if (vanillaSettling) {
-            vanillaPosY -= 2.0f * deltaTime;
-            if (vanillaPosY < -1.5f) {
-                vanillaSettling = false;
-                vanillaHeight = 0.0f;
-                vanillaPosY = 0.0f;
-            }
-        }
-        else {
-            vanillaHeight = 0.0f;
-        }
-        if (chocolate) {
-            chocolateHeight += 0.5f * deltaTime;
-            if (chocolateHeight > 1.0f) chocolateHeight = 1.0f;
-        }
-        else if (chocolateSettling) {
-            chocolatePosY -= 2.0f * deltaTime;
-            if (chocolatePosY < -1.5f) {
-                chocolateSettling = false;
-                chocolateHeight = 0.0f;
-                chocolatePosY = 0.0f;
-            }
-        }
-        else {
-            chocolateHeight = 0.0f;
-        }
-        if (mixed) {
-            mixedHeight += 0.5f * deltaTime;
-            if (mixedHeight > 1.0f) mixedHeight = 1.0f;
-        }
-        else if (mixedSettling) {
-            mixedPosY -= 2.0f * deltaTime;
-            if (mixedPosY < -1.5f) {
-                mixedSettling = false;
-                mixedHeight = 0.0f;
-                mixedPosY = 0.0f;
-            }
-        }
-        else {
-            mixedHeight = 0.0f;
-        }
-        if (vanillaHeight > 0.0f || vanillaSettling) {
-            float drawY = vanillaSettling ? vanillaPosY : (0.8f - vanillaHeight * 0.5f);
-            drawRect(rectShader, VAO_iceCreamVanilla, iceCreamVanillaTexture, -0.3f, drawY, 1.0f, vanillaHeight);
-        }
-
+        // Draw all settled vanilla layers (from bottom to top for proper ordering)
+       
 
         if (sprinklesOpen) {
             drawRect(rectShader, VAO_sprinklesLever, sprinklesOpenTexture, 0.0f, 0.0f, 1.0f, 1.0f);
@@ -334,7 +311,7 @@ int main() {
 
         // Spawn sprinkles when lever is down
         static double lastSprinkleSpawnTime = 0.0;
-        if (sprinklesOpen > 0.5f && currentTime - lastSprinkleSpawnTime > 0.08f) {
+        if (sprinklesOpen && currentTime - lastSprinkleSpawnTime > 0.08f) {
             spawnSprinkles();
             lastSprinkleSpawnTime = currentTime;
         }
