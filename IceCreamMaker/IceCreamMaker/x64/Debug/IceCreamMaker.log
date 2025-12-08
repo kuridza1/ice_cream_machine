@@ -1,2 +1,5 @@
-﻿  IceCream.cpp
+﻿  Main.cpp
+C:\Users\Jovana\Desktop\Fakultet\Računarska grafika\ice_cream_machine\IceCreamMaker\Main.cpp(305,22): warning C4244: 'argument': conversion from 'double' to 'float', possible loss of data
+C:\Users\Jovana\Desktop\Fakultet\Računarska grafika\ice_cream_machine\IceCreamMaker\Main.cpp(306,29): warning C4244: 'argument': conversion from 'double' to 'float', possible loss of data
+C:\Users\Jovana\Desktop\Fakultet\Računarska grafika\ice_cream_machine\IceCreamMaker\Main.cpp(279,31): warning C4101: 'particleVBO': unreferenced local variable
   IceCreamMaker.vcxproj -> C:\Users\Jovana\Desktop\Fakultet\Računarska grafika\ice_cream_machine\IceCreamMaker\x64\Debug\IceCreamMaker.exe

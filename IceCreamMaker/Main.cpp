@@ -22,6 +22,7 @@ unsigned cupFrontTexture;
 unsigned cupBackTexture;
 unsigned spoonTexture;
 unsigned circularTexture;
+unsigned nameTexture;
 
 float spoonX = 0.0f, spoonY = 0.0f;
 float spoonSize = 0.1f;
@@ -44,7 +45,10 @@ void key_callback(GLFWwindow* window, int key, int scancode, int action, int mod
     if (key == GLFW_KEY_S && action == GLFW_PRESS) {
         sprinklesOpen = !sprinklesOpen;
     }
-    
+    if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS) {
+        glfwSetWindowShouldClose(window, GLFW_TRUE); // Close the window
+        return;
+    }
     // Handle ice cream key presses
     handleIceCreamKeyPress(key, action);
     
@@ -244,6 +248,7 @@ int main() {
     preprocessTexture(cupBackTexture, "res/cupBack.png");
     preprocessTexture(spoonTexture, "res/spoon.png"); // You'll need a spoon.png image
     preprocessTexture(circularTexture, "res/circle.png");
+    preprocessTexture(nameTexture, "res/nameTag.png");
 
     // Create shaders
     unsigned int rectShader = createShader("rect.vert", "rect.frag");
@@ -252,7 +257,7 @@ int main() {
     unsigned int particleShader = createShader("particle.vert", "particle.frag");
     if (particleShader == 0) return endProgram("Failed to create particle shader");
 
-    unsigned int VAO_machine, VAO_leverVertical, VAO_leverHorizontal, VAO_sprinklesLever, VAO_iceCreamVanilla, VAO_cup;
+    unsigned int VAO_machine, VAO_leverVertical, VAO_leverHorizontal, VAO_sprinklesLever, VAO_iceCreamVanilla, VAO_cup, VAO_name;
 
     float rectVertices[] = {
         -1.0f,  1.0f,   0.0f, 1.0f,
@@ -269,6 +274,7 @@ int main() {
     formVAOs(rectVertices, sizeof(rectVertices), VAO_iceCreamVanilla);
     formVAOs(rectVertices, sizeof(rectVertices), VAO_cup);
     formVAOs(rectVertices, sizeof(rectVertices), VAO_spoon);
+    formVAOs(rectVertices, sizeof(rectVertices), VAO_name);
 
     unsigned int particleVAO, particleVBO;
     int width, height;
@@ -337,7 +343,7 @@ int main() {
 
         // Draw the machine and levers (on top of cup)
         drawRect(rectShader, VAO_machine, machineTexture, 0.0f, 0.0f, 1.0f, 1.0f);
-
+        drawRect(rectShader, VAO_name, nameTexture, 0.0f, 0.0f, 1.0f, 1.0f);
         drawRect(rectShader, VAO_cup, cupFrontTexture, 0.0f, 0.0f, 1.0f, 1.0f);
 
         iceCreamLever(1, leverPositionVanilla, rectShader, VAO_leverVertical, VAO_leverHorizontal);
