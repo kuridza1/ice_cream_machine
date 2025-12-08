@@ -103,5 +103,11 @@
     <Image Include="res\mixedPour.png">
       <Filter>Resource Files</Filter>
     </Image>
+    <Image Include="res\circle.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="res\spoon.png">
+      <Filter>Resource Files</Filter>
+    </Image>
   </ItemGroup>
 </Project>

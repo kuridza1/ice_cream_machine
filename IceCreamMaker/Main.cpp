@@ -20,10 +20,22 @@ unsigned chocolatePourTexture;
 unsigned mixedPourTexture;
 unsigned cupFrontTexture;
 unsigned cupBackTexture;
+unsigned spoonTexture;
+unsigned circularTexture;
 
-// VAOs
+float spoonX = 0.0f, spoonY = 0.0f;
+float spoonSize = 0.1f;
+bool mousePressed = false;
+
+// Bite marks - now only store positions, we'll draw them differently
+struct BiteMark {
+    float x, y;
+    float size;
+};
+std::vector<BiteMark> biteMarks;
+
 unsigned int VAO_machine, VAO_leverVertical, VAO_leverHorizontal;
-unsigned int VAO_sprinklesLever, VAO_iceCreamVanilla, VAO_cup;
+unsigned int VAO_sprinklesLever, VAO_iceCreamVanilla, VAO_cup, VAO_spoon;
 
 // Global variables
 double lastUpdateTime = 0.0;
@@ -48,7 +60,11 @@ void key_callback(GLFWwindow* window, int key, int scancode, int action, int mod
         case GLFW_KEY_SPACE:
             mixed = !mixed;
             break;
-        }
+        case GLFW_KEY_R:
+            resetCup();
+            biteMarks.clear();
+            break;
+        }   
     }
 }
 
@@ -135,6 +151,57 @@ void drawIceCreamDrops(unsigned int rectShader, unsigned int VAO) {
         }
     }
 }
+void cursor_position_callback(GLFWwindow* window, double xpos, double ypos) {
+    int width, height;
+    glfwGetWindowSize(window, &width, &height);
+
+    // Convert to OpenGL coordinates (-1 to 1)
+    spoonX = (float)(xpos / width * 2.0 - 1.0);
+    spoonY = (float)(1.0 - ypos / height * 2.0);
+}
+
+void mouse_button_callback(GLFWwindow* window, int button, int action, int mods) {
+    if (button == GLFW_MOUSE_BUTTON_LEFT) {
+        mousePressed = (action == GLFW_PRESS);
+
+        // Add bite mark when clicking ON ICE CREAM ONLY
+        if (mousePressed) {
+            // Check if clicking inside the cup area where ice cream is
+            bool isOnVanilla = vanillaFill.isFilled &&
+                spoonY < vanillaFill.fillLevel &&
+                spoonY > CUP_BOTTOM_POS_Y &&
+                spoonX > -0.5f && spoonX < 0.5f;
+
+            bool isOnChocolate = chocolateFill.isFilled &&
+                spoonY < chocolateFill.fillLevel &&
+                spoonY > CUP_BOTTOM_POS_Y &&
+                spoonX > -0.5f && spoonX < 0.5f;
+
+            bool isOnMixed = mixedFill.isFilled &&
+                spoonY < mixedFill.fillLevel &&
+                spoonY > CUP_BOTTOM_POS_Y &&
+                spoonX > -0.5f && spoonX < 0.5f;
+
+            // Only add bite if clicking on actual ice cream
+            if (isOnVanilla || isOnChocolate || isOnMixed) {
+                BiteMark bite;
+                bite.x = spoonX;
+                bite.y = spoonY;
+                bite.size = 0.05f; // Small bite size
+                biteMarks.push_back(bite);
+            }
+        }
+    }
+}
+
+
+void drawBiteMarks(unsigned int rectShader, unsigned int VAO, unsigned int circleTexture) {
+    glUseProgram(rectShader);
+
+    for (const auto& bite : biteMarks) {
+        drawRect(rectShader, VAO, circleTexture, bite.x, bite.y, bite.size, bite.size);
+    }
+}
 
 int main() {
     glfwInit();
@@ -155,7 +222,9 @@ int main() {
 
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-
+    /*cursorReleased = loadImageToCursor("res/cursor.png");
+    cursorPressed = loadImageToCursor("res/cursor_pressed.png");*/
+    //glfwSetCursor(window, cursorReleased);
     // Initialize systems
     initSprinkles();
     initIceCream();
@@ -173,6 +242,8 @@ int main() {
     preprocessTexture(iceCreamMixedTexture, "res/iceCreamMixed.png");
     preprocessTexture(cupFrontTexture, "res/cupFront.png");
     preprocessTexture(cupBackTexture, "res/cupBack.png");
+    preprocessTexture(spoonTexture, "res/spoon.png"); // You'll need a spoon.png image
+    preprocessTexture(circularTexture, "res/circle.png");
 
     // Create shaders
     unsigned int rectShader = createShader("rect.vert", "rect.frag");
@@ -197,6 +268,7 @@ int main() {
     formVAOs(rectVertices, sizeof(rectVertices), VAO_sprinklesLever);
     formVAOs(rectVertices, sizeof(rectVertices), VAO_iceCreamVanilla);
     formVAOs(rectVertices, sizeof(rectVertices), VAO_cup);
+    formVAOs(rectVertices, sizeof(rectVertices), VAO_spoon);
 
     unsigned int particleVAO, particleVBO;
     int width, height;
@@ -214,6 +286,11 @@ int main() {
 
     glClearColor(0.392156862745098f, 0.4470588235294118f, 0.4901960784313725f, 1.0f);
     lastUpdateTime = glfwGetTime();
+    glfwSetCursorPosCallback(window, cursor_position_callback);
+    glfwSetMouseButtonCallback(window, mouse_button_callback);
+
+    // Hide default cursor
+    glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_HIDDEN);
     while (!glfwWindowShouldClose(window)) {
         double currentTime = glfwGetTime();
         double deltaTime = currentTime - lastUpdateTime;
@@ -221,6 +298,7 @@ int main() {
 
         updateLevers(deltaTime);
         updateIceCreamDrops(deltaTime);
+        updateSprinklesPhysics(deltaTime);
 
         glClear(GL_COLOR_BUFFER_BIT);
 
@@ -255,6 +333,7 @@ int main() {
         }
 
         // Draw cup front (on top of everything)
+        drawBiteMarks(rectShader, VAO_spoon, circularTexture); // or drawBiteMarks() if using immediate mode
 
         // Draw the machine and levers (on top of cup)
         drawRect(rectShader, VAO_machine, machineTexture, 0.0f, 0.0f, 1.0f, 1.0f);
@@ -272,8 +351,7 @@ int main() {
             drawRect(rectShader, VAO_sprinklesLever, sprinklesCloseTexture, 0.0f, 0.0f, 1.0f, 1.0f);
         }
 
-        updateSprinklesPhysics(deltaTime);
-
+        
         static double lastSprinkleSpawnTime = 0.0;
         if (sprinklesOpen && currentTime - lastSprinkleSpawnTime > 0.08f) {
             spawnSprinkles();
@@ -283,6 +361,7 @@ int main() {
         for (const auto& drop : sprinkles) {
             drawSprinkles(drop, particleShader, particleVAO);
         }
+        drawRect(rectShader, VAO_spoon, spoonTexture, spoonX, spoonY, spoonSize, spoonSize);
 
         glfwSwapBuffers(window);
         glfwPollEvents();

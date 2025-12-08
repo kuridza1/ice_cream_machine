@@ -160,9 +160,6 @@ void handleIceCreamKeyPress(int key, int action) {
             mixedFill.isActive = mixedPourActive;
             mixedFill.isFilled = true;
             break;
-        case GLFW_KEY_R:
-            resetCup();
-            break;
         }
     }
 }
