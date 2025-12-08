@@ -12,6 +12,7 @@ unsigned leverHorizontalTexture;
 unsigned sprinklesOpenTexture;
 unsigned sprinklesCloseTexture;
 unsigned iceCreamVanillaTexture;
+unsigned cupTexture;
 
 // Lever state variables
 bool vanilla = false;
@@ -43,7 +44,7 @@ bool chocolatePouring = false;
 bool mixedPouring = false;
 bool vanillaPourActive = false;
 float vanillaPourHeight = 0.0f;
-float vanillaPourSpeed = 0.5f; // Adjust speed as needed
+float vanillaPourSpeed = 0.3f; // Adjust speed as needed
 float currentVanillaPourHeight = 0.0f;
 float currentVanillaPourPosY = 0.0f;
 
@@ -173,6 +174,8 @@ int main() {
     preprocessTexture(sprinklesCloseTexture, "res/sprinklesClose.png");
     preprocessTexture(sprinklesOpenTexture, "res/sprinklesOpen.png");
     preprocessTexture(iceCreamVanillaTexture, "res/vanillaPour.png");
+    preprocessTexture(cupTexture, "res/cup.png");
+
 
     // Create shaders
     unsigned int rectShader = createShader("rect.vert", "rect.frag");
@@ -181,7 +184,8 @@ int main() {
     unsigned int particleShader = createShader("particle.vert", "particle.frag");
     if (particleShader == 0) return endProgram("Failed to create particle shader");
 
-    unsigned int VAO_machine, VAO_leverVertical, VAO_leverHorizontal, VAO_sprinklesLever, VAO_iceCreamVanilla;
+    unsigned int VAO_machine, VAO_leverVertical, VAO_leverHorizontal, VAO_sprinklesLever, VAO_iceCreamVanilla,
+        VAO_cup;
 
     float machineRect[] = {
         -1.0f,  1.0f,   0.0f, 1.0f,
@@ -216,7 +220,7 @@ int main() {
     formVAOs(leverHorizontalRect, sizeof(leverHorizontalRect), VAO_leverHorizontal);
     formVAOs(sprinklesLeverRect, sizeof(sprinklesLeverRect), VAO_sprinklesLever);
     formVAOs(machineRect, sizeof(machineRect), VAO_iceCreamVanilla);
-
+    formVAOs(machineRect, sizeof(machineRect), VAO_cup);
     unsigned int particleVAO, particleVBO;
     int width, height;
     glfwGetWindowSize(window, &width, &height);
@@ -243,10 +247,6 @@ int main() {
     glClearColor(0.392156862745098f, 0.4470588235294118f, 0.4901960784313725f, 1.0f);
     lastUpdateTime = glfwGetTime();
 
-    const float MAX_POUR_HEIGHT = 0.8f; // Max height before creating a new layer
-    const float POUR_SPEED = 0.5f;
-    const float SETTLE_SPEED = 2.0f;
-    const float CUP_BOTTOM = -0.5f; // Where settled layers accumulate
 
     while (!glfwWindowShouldClose(window)) {
         double currentTime = glfwGetTime();
@@ -292,6 +292,7 @@ int main() {
         }
         // Draw machine (full screen)
         drawRect(rectShader, VAO_machine, machineTexture, 0.0f, 0.0f, 1.0f, 1.0f);
+        drawRect(rectShader, VAO_cup, cupTexture, 0.0f, 0.0f, 1.0f, 1.0f);
         iceCreamLever(1, leverPositionVanilla, rectShader, VAO_leverVertical, VAO_leverHorizontal);
         iceCreamLever(2, leverPositionMixed, rectShader, VAO_leverVertical, VAO_leverHorizontal);
         iceCreamLever(3, leverPositionChocolate, rectShader, VAO_leverVertical, VAO_leverHorizontal);
