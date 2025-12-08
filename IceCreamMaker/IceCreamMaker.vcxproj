@@ -129,11 +129,15 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="IceCream.cpp" />
+    <ClCompile Include="LeverSystem.cpp" />
     <ClCompile Include="Main.cpp" />
     <ClCompile Include="Sprinkles.cpp" />
     <ClCompile Include="Util.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="IceCream.h" />
+    <ClInclude Include="LeverSystem.h" />
     <ClInclude Include="Sprinkles.h" />
     <ClInclude Include="stb_image.h" />
     <ClInclude Include="Util.h" />
@@ -146,12 +150,16 @@
     <None Include="rect.vert" />
   </ItemGroup>
   <ItemGroup>
+    <Image Include="res\chocolatePour.png" />
     <Image Include="res\cupBack.png" />
     <Image Include="res\cupFront.png" />
     <Image Include="res\handle.png" />
+    <Image Include="res\iceCreamChocolate.png" />
+    <Image Include="res\iceCreamMixed.png" />
     <Image Include="res\iceCreamVanilla.png" />
     <Image Include="res\lever.png" />
     <Image Include="res\machine.png" />
+    <Image Include="res\mixedPour.png" />
     <Image Include="res\sprinklesClose.png" />
     <Image Include="res\sprinklesOpen.png" />
     <Image Include="res\vanillaPour.png" />

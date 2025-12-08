@@ -24,6 +24,12 @@
     <ClCompile Include="Sprinkles.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="IceCream.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="LeverSystem.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Util.h">
@@ -33,6 +39,12 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Sprinkles.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="IceCream.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="LeverSystem.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
@@ -77,6 +89,18 @@
       <Filter>Resource Files</Filter>
     </Image>
     <Image Include="res\cupFront.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="res\chocolatePour.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="res\iceCreamChocolate.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="res\iceCreamMixed.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="res\mixedPour.png">
       <Filter>Resource Files</Filter>
     </Image>
   </ItemGroup>
