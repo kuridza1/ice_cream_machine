@@ -130,14 +130,14 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="IceCream.cpp" />
-    <ClCompile Include="LeverSystem.cpp" />
+    <ClCompile Include="Lever.cpp" />
     <ClCompile Include="Main.cpp" />
     <ClCompile Include="Sprinkles.cpp" />
     <ClCompile Include="Util.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="IceCream.h" />
-    <ClInclude Include="LeverSystem.h" />
+    <ClInclude Include="Lever.h" />
     <ClInclude Include="Sprinkles.h" />
     <ClInclude Include="stb_image.h" />
     <ClInclude Include="Util.h" />

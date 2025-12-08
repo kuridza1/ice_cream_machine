@@ -1,12 +1,12 @@
 ﻿#include <GL/glew.h>
 #include <GLFW/glfw3.h>
 #include <iostream>
-#include <vector>
-#include <algorithm>
 #include "Util.h"
 #include "Sprinkles.h"
+#include "IceCream.h"
+#include "Lever.h"
 
-// Texture IDs
+// Texture IDs (keep as before)
 unsigned machineTexture;
 unsigned leverVerticalTexture;
 unsigned leverHorizontalTexture;
@@ -21,219 +21,41 @@ unsigned mixedPourTexture;
 unsigned cupFrontTexture;
 unsigned cupBackTexture;
 
-// Lever state variables
-bool vanilla = false;
-bool mixed = false;
-bool chocolate = false;
-float leverPositionVanilla = 1.0f;
-float leverPositionMixed = 1.0f;
-float leverPositionChocolate = 1.0f;
-
-const float leverSpeed = 2.0f;
-
-// Cup filling variables
-struct IceCreamDrop {
-    float posY = 0.0f;      // Current Y position (starts at nozzle)
-    float velocity = 0.0f;  // Falling velocity
-    float height = 0.1f;    // Height of each drop
-    bool active = false;    // Whether this drop is active
-    float lifeTime = 0.0f;  // How long the drop has existed
-    int flavorType = 0;          // 1=vanilla, 2=chocolate, 3=mixed
-
-};
-
-std::vector<IceCreamDrop> iceCreamDrops;
-const float NOZZLE_POS_Y = 0.2f;     // Where ice cream comes out (adjust as needed)
-const float CUP_TOP_POS_Y = -0.5f;   // Where cup opening is (adjust as needed)
-const float CUP_BOTTOM_POS_Y = -0.5f; // Where cup bottom is (adjust as needed)
-float cupFillLevel = CUP_BOTTOM_POS_Y; // Current fill level in cup
-const float GRAVITY = 0.5f;          // Gravity strength (adjust for faster/slower falling)
-const float DROP_SPAWN_RATE = 0.2f; // Time between drops (smaller = more frequent)
-const float DROP_WIDTH = 1.0f;      // Width of falling drops
-const float CUP_FILL_WIDTH = 1.0f;   // Width of filled area in cup
-float timeSinceVanillaDrop = 0.0f;
-float timeSinceChocolateDrop = 0.0f;
-float timeSinceMixedDrop = 0.0f;
-bool vanillaPourActive = false;
-bool chocolatePourActive = false;
-bool mixedPourActive = false;
+// VAOs
+unsigned int VAO_machine, VAO_leverVertical, VAO_leverHorizontal;
+unsigned int VAO_sprinklesLever, VAO_iceCreamVanilla, VAO_cup;
 
 // Global variables
 double lastUpdateTime = 0.0;
-// Add near other cup filling variables
-struct CupFill {
-    float fillLevel = CUP_BOTTOM_POS_Y;  // Current fill level
-    bool isFilled = false;               // Whether this flavor is in the cup
-    bool isActive = false;               // Whether currently pouring
-};
 
-CupFill vanillaFill;
-CupFill chocolateFill;
-CupFill mixedFill;
+void key_callback(GLFWwindow* window, int key, int scancode, int action, int mods) {
+    if (key == GLFW_KEY_S && action == GLFW_PRESS) {
+        sprinklesOpen = !sprinklesOpen;
+    }
+    
+    // Handle ice cream key presses
+    handleIceCreamKeyPress(key, action);
+    
+    // Update lever states (for animation)
+    if (action == GLFW_PRESS) {
+        switch (key) {
+        case GLFW_KEY_1:
+            vanilla = !vanilla;
+            break;
+        case GLFW_KEY_2:
+            chocolate = !chocolate;
+            break;
+        case GLFW_KEY_SPACE:
+            mixed = !mixed;
+            break;
+        }
+    }
+}
 
 int endProgram(std::string message) {
     std::cout << message << std::endl;
     glfwTerminate();
     return -1;
-}
-
-void spawnIceCreamDrop(int flavorType) {
-    IceCreamDrop drop;
-    drop.posY = NOZZLE_POS_Y;
-    drop.velocity = 0.0f;
-    drop.height = 1.0f; 
-    drop.active = true;
-    drop.lifeTime = 0.0f;
-    drop.flavorType = flavorType;
-    iceCreamDrops.push_back(drop);
-}
-void resetCup() {
-    vanillaFill.fillLevel = CUP_BOTTOM_POS_Y;
-    vanillaFill.isFilled = false;
-    chocolateFill.fillLevel = CUP_BOTTOM_POS_Y;
-    chocolateFill.isFilled = false;
-    mixedFill.fillLevel = CUP_BOTTOM_POS_Y;
-    mixedFill.isFilled = false;
-
-    // Also reset pour states
-    vanilla = false;
-    vanillaPourActive = false;
-    chocolate = false;
-    chocolatePourActive = false;
-    mixed = false;
-    mixedPourActive = false;
-
-    // Clear existing drops
-    iceCreamDrops.clear();
-
-    // Reset timers
-    timeSinceVanillaDrop = 0.0f;
-    timeSinceChocolateDrop = 0.0f;
-    timeSinceMixedDrop = 0.0f;
-}
-void updateIceCreamDrops(float deltaTime) {
-    // Update separate timers for each flavor
-    if (vanillaPourActive) {
-        timeSinceVanillaDrop += deltaTime;
-        while (timeSinceVanillaDrop >= DROP_SPAWN_RATE) {
-            spawnIceCreamDrop(1); // Vanilla
-            timeSinceVanillaDrop -= DROP_SPAWN_RATE;
-        }
-    }
-
-    if (chocolatePourActive) {
-        timeSinceChocolateDrop += deltaTime;
-        while (timeSinceChocolateDrop >= DROP_SPAWN_RATE) {
-            spawnIceCreamDrop(2); // Chocolate
-            timeSinceChocolateDrop -= DROP_SPAWN_RATE;
-        }
-    }
-
-
-    if (mixedPourActive) {
-        timeSinceMixedDrop += deltaTime;
-        while (timeSinceMixedDrop >= DROP_SPAWN_RATE) {
-            spawnIceCreamDrop(3); // Mixed
-            timeSinceMixedDrop -= DROP_SPAWN_RATE;
-        }
-    }
-
-
-    // Update all active drops
-    for (auto& drop : iceCreamDrops) {
-        if (drop.active) {
-            drop.lifeTime += deltaTime;
-
-            // Apply gravity (simplified physics)
-            drop.velocity -= GRAVITY * deltaTime;
-            drop.posY += drop.velocity * deltaTime;
-
-            // Check if drop reached cup
-            if (drop.posY <= CUP_TOP_POS_Y) {
-                // Add to appropriate fill level
-                switch (drop.flavorType) {
-                case 1: // Vanilla
-                    vanillaFill.fillLevel += 0.02f;
-                    if (vanillaFill.fillLevel > CUP_TOP_POS_Y + 0.8f) {
-                        vanillaFill.fillLevel = CUP_TOP_POS_Y + 0.8f;
-                    }
-                    break;
-                case 2: // Chocolate
-                    chocolateFill.fillLevel += 0.02f;
-                    if (chocolateFill.fillLevel > CUP_TOP_POS_Y + 0.8f) {
-                        chocolateFill.fillLevel = CUP_TOP_POS_Y + 0.8f;
-                    }
-                    break;
-                case 3: // Mixed
-                    mixedFill.fillLevel += 0.02f;
-                    if (mixedFill.fillLevel > CUP_TOP_POS_Y + 0.8f) {
-                        mixedFill.fillLevel = CUP_TOP_POS_Y + 0.8f;
-                    }
-                    break;
-                }
-
-                // Deactivate this drop
-                drop.active = false;
-            }
-
-            // Remove drops that fall too low
-            if (drop.posY < -2.0f) {
-                drop.active = false;
-            }
-
-            // Safety cleanup
-            if (drop.lifeTime > 5.0f) {
-                drop.active = false;
-            }
-        }
-    }
-
-    // Clean up inactive drops
-    iceCreamDrops.erase(
-        std::remove_if(iceCreamDrops.begin(), iceCreamDrops.end(),
-            [](const IceCreamDrop& drop) { return !drop.active; }),
-        iceCreamDrops.end()
-    );
-}
-void key_callback(GLFWwindow* window, int key, int scancode, int action, int mods) {
-    if (key == GLFW_KEY_S && action == GLFW_PRESS) {
-        sprinklesOpen = !sprinklesOpen;
-    }
-    if (key == GLFW_KEY_1 && action == GLFW_PRESS) {
-        vanilla = !vanilla;
-        vanillaPourActive = vanilla;
-        vanillaFill.isActive = vanilla;
-
-        if (vanilla) {
-            timeSinceVanillaDrop = DROP_SPAWN_RATE;
-            vanillaFill.isFilled = true;  // Mark as filled
-        }
-    }
-    if (key == GLFW_KEY_2 && action == GLFW_PRESS) {
-        chocolate = !chocolate;
-        chocolatePourActive = chocolate;
-        chocolateFill.isActive = chocolate;
-
-        if (chocolate) {
-            iceCreamDrops.clear();
-            timeSinceChocolateDrop = 0.0f;
-            chocolateFill.isFilled = true;  // Mark as filled
-        }
-    }
-    if (key == GLFW_KEY_SPACE && action == GLFW_PRESS) {
-        mixed = !mixed;
-        mixedPourActive = mixed;
-        mixedFill.isActive = mixed;
-
-        if (mixed) {
-            iceCreamDrops.clear();
-            timeSinceMixedDrop = 0.0f;
-            mixedFill.isFilled = true;  // Mark as filled
-        }
-    }
-    if (key == GLFW_KEY_R && action == GLFW_PRESS) {
-        resetCup();
-    }
 }
 
 void preprocessTexture(unsigned& texture, const char* filepath) {
@@ -299,7 +121,6 @@ void iceCreamLever(int type, float leverPosition, unsigned int rectShader, unsig
     drawRect(rectShader, VAO_leverVertical, leverVerticalTexture, positionX, verticalPosY, 1.0f, verticalScaleY);
     drawRect(rectShader, VAO_leverHorizontal, leverHorizontalTexture, positionX, horizontalPosY, 1.0f, 1.0f);
 }
-
 void drawIceCreamDrops(unsigned int rectShader, unsigned int VAO) {
     for (const auto& drop : iceCreamDrops) {
         if (drop.active && drop.posY > CUP_TOP_POS_Y) {
@@ -314,7 +135,6 @@ void drawIceCreamDrops(unsigned int rectShader, unsigned int VAO) {
         }
     }
 }
-
 
 int main() {
     glfwInit();
@@ -338,7 +158,7 @@ int main() {
 
     // Initialize systems
     initSprinkles();
-
+    initIceCream();
     // Load textures
     preprocessTexture(machineTexture, "res/machine.png");
     preprocessTexture(leverVerticalTexture, "res/lever.png");
@@ -394,47 +214,23 @@ int main() {
 
     glClearColor(0.392156862745098f, 0.4470588235294118f, 0.4901960784313725f, 1.0f);
     lastUpdateTime = glfwGetTime();
-
     while (!glfwWindowShouldClose(window)) {
         double currentTime = glfwGetTime();
         double deltaTime = currentTime - lastUpdateTime;
         lastUpdateTime = currentTime;
 
-        if (vanilla && leverPositionVanilla < 1.0f) {
-            leverPositionVanilla += leverSpeed * deltaTime;
-            if (leverPositionVanilla > 1.0f) leverPositionVanilla = 1.0f;
-        }
-        else if (!vanilla && leverPositionVanilla > 0.0f) {
-            leverPositionVanilla -= leverSpeed * deltaTime;
-            if (leverPositionVanilla < 0.0f) leverPositionVanilla = 0.0f;
-        }
-        if (chocolate && leverPositionChocolate < 1.0f) {
-            leverPositionChocolate += leverSpeed * deltaTime;
-            if (leverPositionChocolate > 1.0f) leverPositionChocolate = 1.0f;
-        }
-        else if (!chocolate && leverPositionChocolate > 0.0f) {
-            leverPositionChocolate -= leverSpeed * deltaTime;
-            if (leverPositionChocolate < 0.0f) leverPositionChocolate = 0.0f;
-        }
-        if (mixed && leverPositionMixed < 1.0f) {
-            leverPositionMixed += leverSpeed * deltaTime;
-            if (leverPositionMixed > 1.0f) leverPositionMixed = 1.0f;
-
-        }
-        else if (!mixed && leverPositionMixed > 0.0f) {
-            leverPositionMixed -= leverSpeed * deltaTime;
-            if (leverPositionMixed < 0.0f) leverPositionMixed = 0.0f;
-        }
-
+        updateLevers(deltaTime);
         updateIceCreamDrops(deltaTime);
 
         glClear(GL_COLOR_BUFFER_BIT);
 
+        // Draw background elements first
         drawRect(rectShader, VAO_cup, cupBackTexture, 0.0f, 0.0f, 1.0f, 1.0f);
-        drawIceCreamDrops(rectShader, VAO_iceCreamVanilla);
-        drawRect(rectShader, VAO_machine, machineTexture, 0.0f, 0.0f, 1.0f, 1.0f);
-        
 
+        // Draw the piled ice cream drops (inside the cup)
+        drawIceCreamDrops(rectShader, VAO_iceCreamVanilla);
+
+        // Draw the vanilla fill layer (optional - can remove if using only piled drops)
         if (vanillaFill.isFilled && vanillaFill.fillLevel > CUP_BOTTOM_POS_Y) {
             float fillHeight = vanillaFill.fillLevel - CUP_BOTTOM_POS_Y;
             float fillPosY = CUP_BOTTOM_POS_Y + (fillHeight / 2.0f);
@@ -442,6 +238,7 @@ int main() {
                 0.0f, fillPosY, CUP_FILL_WIDTH, fillHeight);
         }
 
+        // Draw chocolate fill layer
         if (chocolateFill.isFilled && chocolateFill.fillLevel > CUP_BOTTOM_POS_Y) {
             float fillHeight = chocolateFill.fillLevel - CUP_BOTTOM_POS_Y;
             float fillPosY = CUP_BOTTOM_POS_Y + (fillHeight / 2.0f);
@@ -449,6 +246,7 @@ int main() {
                 0.0f, fillPosY, CUP_FILL_WIDTH, fillHeight);
         }
 
+        // Draw mixed fill layer
         if (mixedFill.isFilled && mixedFill.fillLevel > CUP_BOTTOM_POS_Y) {
             float fillHeight = mixedFill.fillLevel - CUP_BOTTOM_POS_Y;
             float fillPosY = CUP_BOTTOM_POS_Y + (fillHeight / 2.0f);
@@ -456,7 +254,11 @@ int main() {
                 0.0f, fillPosY, CUP_FILL_WIDTH, fillHeight);
         }
 
-        drawRect(rectShader, VAO_cup, cupFrontTexture, 0.0f, 0.0f, 1.0f, 1.0f);
+        // Draw cup front (on top of everything)
+
+        // Draw the machine and levers (on top of cup)
+        drawRect(rectShader, VAO_machine, machineTexture, 0.0f, 0.0f, 1.0f, 1.0f);
+
         drawRect(rectShader, VAO_cup, cupFrontTexture, 0.0f, 0.0f, 1.0f, 1.0f);
 
         iceCreamLever(1, leverPositionVanilla, rectShader, VAO_leverVertical, VAO_leverHorizontal);
