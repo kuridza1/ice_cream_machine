@@ -38,6 +38,8 @@ float spoonX = 0.0f, spoonY = 0.0f;
 float spoonSize = 0.2f;
 bool mousePressed = false;
 
+const double FPS = 75.0;
+double lastTimeForRefresh = 0.0;
 // Bite marks - now only store positions, we'll draw them differently
 struct BiteMark {
     float x, y;
@@ -135,23 +137,19 @@ void iceCreamLever(int type, float leverPosition, unsigned int rectShader, unsig
     unsigned int VAO_leverHorizontal) {
 
     float verticalScaleY = 1.0f - leverPosition * 0.7f;
-    float verticalPosY = (1.0f - verticalScaleY) * 0.5f;
-    float horizontalPosY = leverPosition * -0.23f;
+    float verticalPosY = (1.0f - verticalScaleY) * 0.4f;
+    float horizontalPosY = leverPosition * -0.2f;
     float positionX = 0.0f;
     switch (type) {
-    case 1:
-        positionX = 0.0f;
-        break;
-    case 2:
-        positionX = 0.16f;
-        break;
-    case 3:
-        positionX = 0.31f;
-        break;
+    case 1: positionX = 0.0f; break;
+    case 2: positionX = 0.16f; break;
+    case 3: positionX = 0.31f; break;
     }
+
     drawRect(rectShader, VAO_leverVertical, leverVerticalTexture, positionX, verticalPosY, 1.0f, verticalScaleY);
     drawRect(rectShader, VAO_leverHorizontal, leverHorizontalTexture, positionX, horizontalPosY, 1.0f, 1.0f);
 }
+
 void drawIceCreamDrops(unsigned int rectShader, unsigned int VAO) {
     for (const auto& drop : iceCreamDrops) {
         if (drop.active && drop.posY > CUP_TOP_POS_Y) {
@@ -175,41 +173,89 @@ void cursor_position_callback(GLFWwindow* window, double xpos, double ypos) {
     spoonY = (float)(1.0 - ypos / height * 2.0);
 }
 
+
 void mouse_button_callback(GLFWwindow* window, int button, int action, int mods) {
     if (button == GLFW_MOUSE_BUTTON_LEFT) {
         mousePressed = (action == GLFW_PRESS);
 
-        // Add bite mark when clicking ON ICE CREAM ONLY
         if (mousePressed) {
-            // Check if clicking inside the cup area where ice cream is
+            const float TEXTURE_SCALE = 0.35f; // Adjust this!
+            float scaledFillVanilla = CUP_BOTTOM_POS_Y +
+                (vanillaFill.fillLevel - CUP_BOTTOM_POS_Y) * TEXTURE_SCALE;
+            float scaledFillChocolate = CUP_BOTTOM_POS_Y +
+                (chocolateFill.fillLevel - CUP_BOTTOM_POS_Y) * TEXTURE_SCALE;
+            float scaledFillMixed = CUP_BOTTOM_POS_Y +
+                (mixedFill.fillLevel - CUP_BOTTOM_POS_Y) * TEXTURE_SCALE;
+
             bool isOnVanilla = vanillaFill.isFilled &&
-                spoonY < vanillaFill.fillLevel &&
+                spoonY < scaledFillVanilla &&
                 spoonY > CUP_BOTTOM_POS_Y &&
-                spoonX > -0.5f && spoonX < 0.5f;
+                spoonX > 0.1f && spoonX < 0.5f;
 
             bool isOnChocolate = chocolateFill.isFilled &&
-                spoonY < chocolateFill.fillLevel &&
+                spoonY < scaledFillChocolate &&
                 spoonY > CUP_BOTTOM_POS_Y &&
-                spoonX > -0.5f && spoonX < 0.5f;
+                spoonX > 0.1f && spoonX < 0.5f;
 
             bool isOnMixed = mixedFill.isFilled &&
-                spoonY < mixedFill.fillLevel &&
+                spoonY < scaledFillMixed &&
                 spoonY > CUP_BOTTOM_POS_Y &&
-                spoonX > -0.5f && spoonX < 0.5f;
+                spoonX > 0.1f && spoonX < 0.5f;
 
             // Only add bite if clicking on actual ice cream
             if (isOnVanilla || isOnChocolate || isOnMixed) {
+                // 1. Add bite mark
                 BiteMark bite;
                 bite.x = spoonX;
                 bite.y = spoonY;
-                bite.size = 0.05f; // Small bite size
+                bite.size = 0.05f;
                 biteMarks.push_back(bite);
+
+                const float REDUCTION = 0.15f;
+
+                if (isOnVanilla && vanillaFill.isFilled) {
+                    vanillaFill.fillLevel -= REDUCTION;
+                    if (vanillaFill.fillLevel <= CUP_BOTTOM_POS_Y) {
+                        vanillaFill.fillLevel = CUP_BOTTOM_POS_Y;
+                        vanillaFill.isFilled = false;
+                    }
+                }
+
+                if (isOnChocolate && chocolateFill.isFilled) {
+                    chocolateFill.fillLevel -= REDUCTION;
+                    if (chocolateFill.fillLevel <= CUP_BOTTOM_POS_Y) {
+                        chocolateFill.fillLevel = CUP_BOTTOM_POS_Y;
+                        chocolateFill.isFilled = false;
+                    }
+                }
+
+                if (isOnMixed && mixedFill.isFilled) {
+                    mixedFill.fillLevel -= REDUCTION;
+                    if (mixedFill.fillLevel <= CUP_BOTTOM_POS_Y) {
+                        mixedFill.fillLevel = CUP_BOTTOM_POS_Y;
+                        mixedFill.isFilled = false;
+                    }
+                }
+                bool cupIsEmpty = !vanillaFill.isFilled &&
+                    !chocolateFill.isFilled &&
+                    !mixedFill.isFilled;
+
+                if (cupIsEmpty) {
+                    // Reset everything
+                    resetCup();
+                    resetSprinkles();
+                    biteMarks.clear();
+                }
             }
         }
     }
 }
-
-
+void limitFPS() {
+    while (glfwGetTime() < lastTimeForRefresh + 1.0 / FPS) {
+        // Busy wait - CPU spins but gives precise timing
+    }
+    lastTimeForRefresh += 1.0 / FPS;
+}
 void drawBiteMarks(unsigned int rectShader, unsigned int VAO, unsigned int circleTexture) {
     glUseProgram(rectShader);
 
@@ -218,6 +264,39 @@ void drawBiteMarks(unsigned int rectShader, unsigned int VAO, unsigned int circl
     }
 }
 
+// Add this function to reduce ice cream when bitten
+void reduceIceCreamFromBites() {
+    if (biteMarks.empty()) return;
+
+    // Base reduction + extra per bite
+    float baseReduction = 0.001f;
+    float extraPerBite = 0.0005f;
+    float totalReduction = baseReduction + (extraPerBite * biteMarks.size());
+
+    // Cap maximum reduction
+    if (totalReduction > 0.01f) totalReduction = 0.01f;
+
+    if (vanillaFill.isFilled) {
+        vanillaFill.fillLevel -= totalReduction;
+        if (vanillaFill.fillLevel < CUP_BOTTOM_POS_Y) {
+            vanillaFill.fillLevel = CUP_BOTTOM_POS_Y;
+        }
+    }
+
+    if (chocolateFill.isFilled) {
+        chocolateFill.fillLevel -= totalReduction;
+        if (chocolateFill.fillLevel < CUP_BOTTOM_POS_Y) {
+            chocolateFill.fillLevel = CUP_BOTTOM_POS_Y;
+        }
+    }
+
+    if (mixedFill.isFilled) {
+        mixedFill.fillLevel -= totalReduction;
+        if (mixedFill.fillLevel < CUP_BOTTOM_POS_Y) {
+            mixedFill.fillLevel = CUP_BOTTOM_POS_Y;
+        }
+    }
+}
 int main() {
     glfwInit();
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
@@ -256,7 +335,7 @@ int main() {
     preprocessTexture(iceCreamMixedTexture, "res/iceCreamMixed.png");
     preprocessTexture(cupFrontTexture, "res/cupFront.png");
     preprocessTexture(cupBackTexture, "res/cupBack.png");
-    preprocessTexture(spoonTexture, "res/spoon.png"); // You'll need a spoon.png image
+    preprocessTexture(spoonTexture, "res/spoon.png");
     preprocessTexture(circularTexture, "res/circle.png");
     preprocessTexture(nameTexture, "res/nameTag.png");
     preprocessTexture(glassTexture, "res/glass.png");
@@ -304,9 +383,11 @@ int main() {
 
     glClearColor(0.392156862745098f, 0.4470588235294118f, 0.4901960784313725f, 1.0f);
     lastUpdateTime = glfwGetTime();
+
+    lastTimeForRefresh = glfwGetTime();
+
     glfwSetCursorPosCallback(window, cursor_position_callback);
     glfwSetMouseButtonCallback(window, mouse_button_callback);
-
     // Hide default cursor
     glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_HIDDEN);
     while (!glfwWindowShouldClose(window)) {
@@ -390,6 +471,8 @@ int main() {
 
         glfwSwapBuffers(window);
         glfwPollEvents();
+        limitFPS();
+
     }
 
     glDeleteProgram(rectShader);

@@ -96,7 +96,7 @@ void updateIceCreamDrops(float deltaTime) {
 
             // Check if drop reached cup
             if (drop.posY <= CUP_TOP_POS_Y) {
-                // Add to appropriate fill level
+
                 switch (drop.flavorType) {
                 case 1: // Vanilla
                     vanillaFill.fillLevel += 0.02f;
