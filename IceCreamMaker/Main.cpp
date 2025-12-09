@@ -23,6 +23,7 @@ unsigned cupBackTexture;
 unsigned spoonTexture;
 unsigned circularTexture;
 unsigned nameTexture;
+unsigned glassTexture;
 
 // Add these near your other global variables in main.cpp:
 bool vanillaFilled = false;
@@ -258,6 +259,7 @@ int main() {
     preprocessTexture(spoonTexture, "res/spoon.png"); // You'll need a spoon.png image
     preprocessTexture(circularTexture, "res/circle.png");
     preprocessTexture(nameTexture, "res/nameTag.png");
+    preprocessTexture(glassTexture, "res/glass.png");
 
     // Create shaders
     unsigned int rectShader = createShader("rect.vert", "rect.frag");
@@ -266,7 +268,7 @@ int main() {
     unsigned int particleShader = createShader("particle.vert", "particle.frag");
     if (particleShader == 0) return endProgram("Failed to create particle shader");
 
-    unsigned int VAO_machine, VAO_leverVertical, VAO_leverHorizontal, VAO_sprinklesLever, VAO_iceCreamVanilla, VAO_cup, VAO_name;
+    unsigned int VAO_machine, VAO_leverVertical, VAO_leverHorizontal, VAO_sprinklesLever, VAO_iceCreamVanilla, VAO_cup, VAO_name, VAO_glass;
 
     float rectVertices[] = {
         -1.0f,  1.0f,   0.0f, 1.0f,
@@ -284,6 +286,7 @@ int main() {
     formVAOs(rectVertices, sizeof(rectVertices), VAO_cup);
     formVAOs(rectVertices, sizeof(rectVertices), VAO_spoon);
     formVAOs(rectVertices, sizeof(rectVertices), VAO_name);
+    formVAOs(rectVertices, sizeof(rectVertices), VAO_glass);
 
     unsigned int particleVAO, particleVBO;
     int width, height;
@@ -352,11 +355,7 @@ int main() {
             float fillPosY = CUP_BOTTOM_POS_Y + (fillHeight / 2.0f);
             drawRect(rectShader, VAO_iceCreamVanilla, iceCreamMixedTexture,
                 0.0f, fillPosY, CUP_FILL_WIDTH, fillHeight);
-        }
-
-        // Draw cup front (on top of everything)
-        
-
+        }        
 
         // Draw the machine and levers (on top of cup)
         drawRect(rectShader, VAO_machine, machineTexture, 0.0f, 0.0f, 1.0f, 1.0f);
@@ -384,7 +383,8 @@ int main() {
             drawRect(rectShader, VAO_sprinklesLever, sprinklesCloseTexture, 0.0f, 0.0f, 1.0f, 1.0f);
         }
 
-        
+        drawRect(rectShader, VAO_glass, glassTexture, 0.0f, 0.0f, 1.0f, 1.0f);
+
         
         drawRect(rectShader, VAO_spoon, spoonTexture, spoonX, spoonY, spoonSize, spoonSize);
 

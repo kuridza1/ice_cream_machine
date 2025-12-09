@@ -65,13 +65,13 @@ void drawIceCreamLever(int type, float leverPosition, unsigned int rectShader,
         };
 
     // Calculate lever positions
-    float verticalScaleY = 1.0f - leverPosition * 0.7f;
+    float verticalScaleY = 1.0f - leverPosition * 0.6f;
     float verticalPosY = (1.0f - verticalScaleY) * 0.5f;
-    float horizontalPosY = leverPosition * -0.23f;
+    float horizontalPosY = leverPosition * 0.6f;
 
     // Draw lever parts
     drawRect(rectShader, VAO_leverVertical, leverVerticalTexture,
-        0.0f, 0.0f, 1.0f, verticalScaleY);
+        0.0f, 0.0f, 1.0f, 1.0f);
     drawRect(rectShader, VAO_leverHorizontal, leverHorizontalTexture,
         posX, horizontalPosY, 1.0f, 1.0f);
 }

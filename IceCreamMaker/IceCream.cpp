@@ -16,7 +16,7 @@ bool mixedPourActive = false;
 // Constants
 const float NOZZLE_POS_Y = 0.2f;
 const float CUP_TOP_POS_Y = -0.5f;
-const float CUP_BOTTOM_POS_Y = -0.5f;
+const float CUP_BOTTOM_POS_Y = -0.54f;
 const float GRAVITY = 0.5f;
 const float DROP_SPAWN_RATE = 0.2f;
 const float DROP_WIDTH = 1.0f;

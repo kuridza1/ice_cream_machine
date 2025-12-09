@@ -16,17 +16,17 @@ std::mt19937 gen(rd());
 const float GRAVITYS = -5.0f;
 const float DAMPING = 0.3f;
 const float FRICTION = 0.85f;
-const float FINAL_GROUND_Y = -0.7f;
+const float FINAL_GROUND_Y = -0.76f;
 
 // Tunnel coordinates - ADD NEW COORDINATES
-const float SPRINKLE_NOZZLE_X = -0.36f;  // Where sprinkles spawn from container
-const float SPRINKLE_NOZZLE_Y = 0.1f;    // Height of sprinkle nozzle
-const float TUNNEL_ENTRANCE_X = -0.36f;  // Where sprinkles ENTER the tunnel
-const float TUNNEL_ENTRANCE_Y = -0.02f;  // Height of tunnel entrance
-const float TUNNEL_START_X = -0.36f;     // Start of SLOPE (same as entrance for now)
-const float TUNNEL_START_Y = -0.02f;     // Start of SLOPE
-const float TUNNEL_END_X = -0.03f;        // End of tunnel slope
-const float TUNNEL_END_Y = -0.13f;       // End of tunnel slope
+const float SPRINKLE_NOZZLE_X = -0.17f;  // Where sprinkles spawn from container
+const float SPRINKLE_NOZZLE_Y = 0.03f;    // Height of sprinkle nozzle
+const float TUNNEL_ENTRANCE_X = -0.17f;  // Where sprinkles ENTER the tunnel
+const float TUNNEL_ENTRANCE_Y = -0.05f;  // Height of tunnel entrance
+const float TUNNEL_START_X = -0.21f;     // Start of SLOPE (same as entrance for now)
+const float TUNNEL_START_Y = -0.05f;     // Start of SLOPE
+const float TUNNEL_END_X = 0.16f;        // End of tunnel slope
+const float TUNNEL_END_Y = -0.17f;       // End of tunnel slope
 
 const float SLIDE_SPEED = 0.5f;
 const float EXIT_WAIT_TIME = 0.5f;
@@ -237,9 +237,9 @@ void updateSprinklesPhysics(double deltaTime) {
                 drop.collisionState = 2;
                 drop.isInTunnel = false;
 
-                // RANDOM velocities to spread sprinkles across cup
-                std::uniform_real_distribution<> disExitVX(-0.05f, 0.2f); // Mostly forward, some random
-                std::uniform_real_distribution<> disExitVY(-0.02f, 0.1f); // Small vertical variation
+                //random velocities to spread sprinkles across cup
+                std::uniform_real_distribution<> disExitVX(-0.05f, 0.2f); 
+                std::uniform_real_distribution<> disExitVY(-0.02f, 0.1f);
 
                 drop.vx = disExitVX(gen);
                 drop.vy = disExitVY(gen);
@@ -262,7 +262,7 @@ void updateSprinklesPhysics(double deltaTime) {
             float surfaceHeight = FINAL_GROUND_Y; // Default to floor
 
             // Check if sprinkle is over the cup area (-0.5 to 0.5)
-            if (drop.x > 0.0f && drop.x < 0.8f) {
+            if (drop.x > 0.18f && drop.x < 0.9f) {
                 // Find the highest ice cream flavor
 
                 if (vanillaFilled && vanillaLevel > highestIceCream) {
@@ -281,7 +281,7 @@ void updateSprinklesPhysics(double deltaTime) {
             // Check for collision with surface (ice cream or floor)
             if (drop.y - drop.size <= surfaceHeight) {
                 // Check if we're in the cup area
-                bool isInCup = (drop.x > 0.0f && drop.x < 0.7f);
+                bool isInCup = (drop.x > 0.18f && drop.x < 0.9f);
 
                 if (isInCup && surfaceHeight > FINAL_GROUND_Y + 0.01f) {
                     static std::uniform_real_distribution<> heightDist(0.01f, abs(highestIceCream/2));

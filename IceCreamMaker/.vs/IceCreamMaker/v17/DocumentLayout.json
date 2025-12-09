@@ -3,16 +3,16 @@
   "WorkspaceRootPath": "C:\\Users\\Jovana\\Desktop\\Fakultet\\Ra\u010Dunarska grafika\\ice_cream_machine\\IceCreamMaker\\",
   "Documents": [
     {
-      "AbsoluteMoniker": "D:0:0:{A013F4F9-F11F-4789-BFE2-9D318A7DCAA3}|IceCreamMaker.vcxproj|C:\\Users\\Jovana\\Desktop\\Fakultet\\Ra\u010Dunarska grafika\\ice_cream_machine\\IceCreamMaker\\Sprinkles.cpp||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}",
-      "RelativeMoniker": "D:0:0:{A013F4F9-F11F-4789-BFE2-9D318A7DCAA3}|IceCreamMaker.vcxproj|solutionrelative:Sprinkles.cpp||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{A013F4F9-F11F-4789-BFE2-9D318A7DCAA3}|IceCreamMaker.vcxproj|C:\\Users\\Jovana\\Desktop\\Fakultet\\Ra\u010Dunarska grafika\\ice_cream_machine\\IceCreamMaker\\Sprinkles.h||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}",
-      "RelativeMoniker": "D:0:0:{A013F4F9-F11F-4789-BFE2-9D318A7DCAA3}|IceCreamMaker.vcxproj|solutionrelative:Sprinkles.h||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}"
-    },
-    {
       "AbsoluteMoniker": "D:0:0:{A013F4F9-F11F-4789-BFE2-9D318A7DCAA3}|IceCreamMaker.vcxproj|C:\\Users\\Jovana\\Desktop\\Fakultet\\Ra\u010Dunarska grafika\\ice_cream_machine\\IceCreamMaker\\Main.cpp||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}",
       "RelativeMoniker": "D:0:0:{A013F4F9-F11F-4789-BFE2-9D318A7DCAA3}|IceCreamMaker.vcxproj|solutionrelative:Main.cpp||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{A013F4F9-F11F-4789-BFE2-9D318A7DCAA3}|IceCreamMaker.vcxproj|C:\\Users\\Jovana\\Desktop\\Fakultet\\Ra\u010Dunarska grafika\\ice_cream_machine\\IceCreamMaker\\Lever.cpp||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}",
+      "RelativeMoniker": "D:0:0:{A013F4F9-F11F-4789-BFE2-9D318A7DCAA3}|IceCreamMaker.vcxproj|solutionrelative:Lever.cpp||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{A013F4F9-F11F-4789-BFE2-9D318A7DCAA3}|IceCreamMaker.vcxproj|C:\\Users\\Jovana\\Desktop\\Fakultet\\Ra\u010Dunarska grafika\\ice_cream_machine\\IceCreamMaker\\Sprinkles.cpp||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}",
+      "RelativeMoniker": "D:0:0:{A013F4F9-F11F-4789-BFE2-9D318A7DCAA3}|IceCreamMaker.vcxproj|solutionrelative:Sprinkles.cpp||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}"
     },
     {
       "AbsoluteMoniker": "D:0:0:{A013F4F9-F11F-4789-BFE2-9D318A7DCAA3}|IceCreamMaker.vcxproj|C:\\Users\\Jovana\\Desktop\\Fakultet\\Ra\u010Dunarska grafika\\ice_cream_machine\\IceCreamMaker\\IceCream.cpp||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}",
@@ -28,6 +28,19 @@
           "DockedWidth": 315,
           "SelectedChildIndex": 13,
           "Children": [
+            {
+              "$type": "Document",
+              "DocumentIndex": 1,
+              "Title": "Lever.cpp",
+              "DocumentMoniker": "C:\\Users\\Jovana\\Desktop\\Fakultet\\Ra\u010Dunarska grafika\\ice_cream_machine\\IceCreamMaker\\Lever.cpp",
+              "RelativeDocumentMoniker": "Lever.cpp",
+              "ToolTip": "C:\\Users\\Jovana\\Desktop\\Fakultet\\Ra\u010Dunarska grafika\\ice_cream_machine\\IceCreamMaker\\Lever.cpp",
+              "RelativeToolTip": "Lever.cpp",
+              "ViewState": "AgIAABgAAAAAAAAAAAAAAEkAAAAeAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000677|",
+              "WhenOpened": "2025-12-09T05:02:00.752Z",
+              "EditorCaption": ""
+            },
             {
               "$type": "Bookmark",
               "Name": "ST:0:0:{b015bca8-f686-4aaf-a093-5d028dbdb089}"
@@ -75,14 +88,28 @@
             {
               "$type": "Document",
               "DocumentIndex": 2,
+              "Title": "Sprinkles.cpp",
+              "DocumentMoniker": "C:\\Users\\Jovana\\Desktop\\Fakultet\\Ra\u010Dunarska grafika\\ice_cream_machine\\IceCreamMaker\\Sprinkles.cpp",
+              "RelativeDocumentMoniker": "Sprinkles.cpp",
+              "ToolTip": "C:\\Users\\Jovana\\Desktop\\Fakultet\\Ra\u010Dunarska grafika\\ice_cream_machine\\IceCreamMaker\\Sprinkles.cpp",
+              "RelativeToolTip": "Sprinkles.cpp",
+              "ViewState": "AgIAABIBAAAAAAAAAAAMwA0BAAARAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000677|",
+              "WhenOpened": "2025-12-09T04:54:56.077Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 0,
               "Title": "Main.cpp",
               "DocumentMoniker": "C:\\Users\\Jovana\\Desktop\\Fakultet\\Ra\u010Dunarska grafika\\ice_cream_machine\\IceCreamMaker\\Main.cpp",
               "RelativeDocumentMoniker": "Main.cpp",
               "ToolTip": "C:\\Users\\Jovana\\Desktop\\Fakultet\\Ra\u010Dunarska grafika\\ice_cream_machine\\IceCreamMaker\\Main.cpp",
               "RelativeToolTip": "Main.cpp",
-              "ViewState": "AgIAAAwAAAAAAAAAAAAAACQAAAAVAAAAAAAAAA==",
+              "ViewState": "AgIAAIIAAAAAAAAAAAAMwJAAAAALAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000677|",
-              "WhenOpened": "2025-12-09T00:15:37.001Z"
+              "WhenOpened": "2025-12-09T00:15:37.001Z",
+              "EditorCaption": ""
             },
             {
               "$type": "Document",
@@ -92,34 +119,9 @@
               "RelativeDocumentMoniker": "IceCream.cpp",
               "ToolTip": "C:\\Users\\Jovana\\Desktop\\Fakultet\\Ra\u010Dunarska grafika\\ice_cream_machine\\IceCreamMaker\\IceCream.cpp",
               "RelativeToolTip": "IceCream.cpp",
-              "ViewState": "AgIAAAMAAAAAAAAAAAAMwBEAAAAiAAAAAAAAAA==",
+              "ViewState": "AgIAAAkAAAAAAAAAAAAMwBIAAAAkAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000677|",
               "WhenOpened": "2025-12-08T23:56:39.084Z"
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 0,
-              "Title": "Sprinkles.cpp",
-              "DocumentMoniker": "C:\\Users\\Jovana\\Desktop\\Fakultet\\Ra\u010Dunarska grafika\\ice_cream_machine\\IceCreamMaker\\Sprinkles.cpp",
-              "RelativeDocumentMoniker": "Sprinkles.cpp",
-              "ToolTip": "C:\\Users\\Jovana\\Desktop\\Fakultet\\Ra\u010Dunarska grafika\\ice_cream_machine\\IceCreamMaker\\Sprinkles.cpp",
-              "RelativeToolTip": "Sprinkles.cpp",
-              "ViewState": "AgIAAA0BAAAAAAAAAAAcwB4BAAAAAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000677|",
-              "WhenOpened": "2025-12-08T23:20:01.11Z",
-              "EditorCaption": ""
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 1,
-              "Title": "Sprinkles.h",
-              "DocumentMoniker": "C:\\Users\\Jovana\\Desktop\\Fakultet\\Ra\u010Dunarska grafika\\ice_cream_machine\\IceCreamMaker\\Sprinkles.h",
-              "RelativeDocumentMoniker": "Sprinkles.h",
-              "ToolTip": "C:\\Users\\Jovana\\Desktop\\Fakultet\\Ra\u010Dunarska grafika\\ice_cream_machine\\IceCreamMaker\\Sprinkles.h",
-              "RelativeToolTip": "Sprinkles.h",
-              "ViewState": "AgIAACYAAAAAAAAAAAAcwDgAAAAWAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000680|",
-              "WhenOpened": "2025-12-08T23:19:23.865Z"
             }
           ]
         },
