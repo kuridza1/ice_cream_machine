@@ -259,10 +259,8 @@ void updateSprinklesPhysics(double deltaTime) {
             // Check if sprinkle is over the cup area
             if (drop.x > 0.18f && drop.x < 0.5f) {
 
-                // Use the SAME scaling calculation as bite marks
                 const float TEXTURE_SCALE = 0.3f;
 
-                // For vanilla: same scaling as bite marks
                 if (vanillaFilled) {
                     float scaledVanillaHeight = -0.54f + (vanillaLevel + 0.54f) * TEXTURE_SCALE;
                     if (scaledVanillaHeight > highestIceCream) {
@@ -270,19 +268,17 @@ void updateSprinklesPhysics(double deltaTime) {
                     }
                 }
 
-                // For chocolate and mixed: adjust if needed
                 if (chocolateFilled) {
-                    // Try without offset first, or use same scaling
-                    float chocolateHeight = chocolateLevel; // Or chocolateLevel * TEXTURE_SCALE
-                    if (chocolateHeight > highestIceCream) {
-                        highestIceCream = chocolateHeight;
+                    float scaledChocolateHeight = -0.54f + (chocolateLevel + 0.54f) * TEXTURE_SCALE;
+                    if (scaledChocolateHeight > highestIceCream) {
+                        highestIceCream = scaledChocolateHeight;
                     }
                 }
 
                 if (mixedFilled) {
-                    float mixedHeight = mixedLevel; // Or mixedLevel * TEXTURE_SCALE
-                    if (mixedHeight > highestIceCream) {
-                        highestIceCream = mixedHeight;
+                    float scaledMixedHeight = -0.54f + (mixedLevel + 0.54f) * TEXTURE_SCALE;
+                    if (scaledMixedHeight > highestIceCream) {
+                        highestIceCream = scaledMixedHeight;
                     }
                 }
 
