@@ -13,19 +13,35 @@ std::random_device rd;
 std::mt19937 gen(rd());
 
 // Constants
-const float GRAVITYS = -2.0f;
+const float GRAVITYS = -5.0f;
 const float DAMPING = 0.3f;
 const float FRICTION = 0.85f;
-const float FINAL_GROUND_Y = -0.3f;
-const float TUNNEL_START_X = -0.36f;
-const float TUNNEL_START_Y = -0.02f;
-const float TUNNEL_END_X = 0.05f;
-const float TUNNEL_END_Y = -0.15f;
+const float FINAL_GROUND_Y = -0.7f;
+
+// Tunnel coordinates - ADD NEW COORDINATES
+const float SPRINKLE_NOZZLE_X = -0.36f;  // Where sprinkles spawn from container
+const float SPRINKLE_NOZZLE_Y = 0.1f;    // Height of sprinkle nozzle
+const float TUNNEL_ENTRANCE_X = -0.36f;  // Where sprinkles ENTER the tunnel
+const float TUNNEL_ENTRANCE_Y = -0.02f;  // Height of tunnel entrance
+const float TUNNEL_START_X = -0.36f;     // Start of SLOPE (same as entrance for now)
+const float TUNNEL_START_Y = -0.02f;     // Start of SLOPE
+const float TUNNEL_END_X = -0.03f;        // End of tunnel slope
+const float TUNNEL_END_Y = -0.13f;       // End of tunnel slope
+
 const float SLIDE_SPEED = 0.5f;
 const float EXIT_WAIT_TIME = 0.5f;
 
 // Tunnel slope
 const float TUNNEL_SLOPE = (TUNNEL_END_Y - TUNNEL_START_Y) / (TUNNEL_END_X - TUNNEL_START_X);
+
+// Ice cream data (extern - will be set from main.cpp)
+extern bool vanillaFilled;
+extern float vanillaLevel;
+extern bool chocolateFilled;
+extern float chocolateLevel;
+extern bool mixedFilled;
+extern float mixedLevel;
+extern float cupBottomY;
 
 void initSprinkles() {
     sprinkles.clear();
@@ -40,17 +56,18 @@ void spawnSprinkles() {
 
     Sprinkle sprinkle;
 
-    sprinkle.x = TUNNEL_START_X;
-    sprinkle.y = TUNNEL_START_Y + 0.1f;
+    // Spawn from NOZZLE, not tunnel entrance
+    sprinkle.x = SPRINKLE_NOZZLE_X;
+    sprinkle.y = SPRINKLE_NOZZLE_Y;
     sprinkle.slideTimer = 0.0f;
     sprinkle.isInTunnel = false;
     sprinkle.waitingToExit = false;
     sprinkle.waitTimer = 0.0f;
-    sprinkle.collisionState = 0;
+    sprinkle.collisionState = 0; // Start falling from nozzle
 
-    // Random velocities
-    std::uniform_real_distribution<> disX(-0.07f, 0.07f);
-    std::uniform_real_distribution<> disY(-0.1f, -0.1f);
+    // Random velocities - give them MORE horizontal spread
+    std::uniform_real_distribution<> disX(-0.08f, 0.08f); // Increased from -0.05 to -0.08
+    std::uniform_real_distribution<> disY(-0.15f, -0.08f);
     sprinkle.vx = disX(gen);
     sprinkle.vy = disY(gen);
 
@@ -125,7 +142,7 @@ void updateSprinklesPhysics(double deltaTime) {
         float prevY = drop.y - drop.vy * deltaTime;
 
         // Apply gravity only if not in tunnel or settled
-        if (drop.collisionState == 0 || drop.collisionState == 2) {
+        if (drop.collisionState == 0) { // Only when falling from nozzle
             drop.vy += GRAVITYS * deltaTime;
         }
 
@@ -134,23 +151,23 @@ void updateSprinklesPhysics(double deltaTime) {
         drop.y += drop.vy * deltaTime;
 
         // Update rotation (only when falling)
-        if (drop.collisionState == 0 || drop.collisionState == 2) {
+        if (drop.collisionState == 0) {
             drop.rotation += drop.rotationSpeed * deltaTime;
         }
 
         // State machine for sprinkles
         switch (drop.collisionState) {
-        case 0: // Initial falling
+        case 0: // Falling from nozzle to tunnel entrance
             // Check if sprinkle hits the tunnel entrance
-            if (prevY > TUNNEL_START_Y && drop.y <= TUNNEL_START_Y + drop.size &&
-                drop.x >= TUNNEL_START_X - drop.size && drop.x <= TUNNEL_START_X + drop.size) {
+            if (prevY > TUNNEL_ENTRANCE_Y && drop.y <= TUNNEL_ENTRANCE_Y + drop.size &&
+                drop.x >= TUNNEL_ENTRANCE_X - 0.05f && drop.x <= TUNNEL_ENTRANCE_X + 0.05f) {
 
-                // Place sprinkle at tunnel start
-                drop.x = TUNNEL_START_X;
-                drop.y = TUNNEL_START_Y + drop.size;
+                // Place sprinkle at tunnel entrance
+                drop.x = TUNNEL_ENTRANCE_X;
+                drop.y = TUNNEL_ENTRANCE_Y + drop.size;
                 drop.vx = 0.0f;
                 drop.vy = 0.0f;
-                drop.collisionState = 1;
+                drop.collisionState = 1; // Now in tunnel
                 drop.isInTunnel = true;
                 drop.slideTimer = 0.0f;
 
@@ -163,86 +180,150 @@ void updateSprinklesPhysics(double deltaTime) {
                     drop.waitTimer = 0.0f;
                 }
             }
-            // Check for ice cream collision (skip tunnel)
-            else if (drop.y - drop.size <= FINAL_GROUND_Y) {
-                drop.y = FINAL_GROUND_Y + drop.size;
-                drop.vy = 0.0f;
-                drop.vx = 0.0f;
-                drop.rotationSpeed = 0.0f;
-                drop.collisionState = 3;
+            // If sprinkle misses tunnel and falls too low, deactivate it
+            else if (drop.y < -1.0f) {
+                drop.active = false;
             }
             break;
 
-        case 1: // Sliding in tunnel
+        case 1: // Sliding in tunnel (vertical drop before slope)
             drop.slideTimer += deltaTime;
 
-            if (drop.waitingToExit) {
-                // Wait at current position
-                drop.waitTimer += deltaTime;
+            // First, drop vertically a bit before starting slope
+            if (drop.y > TUNNEL_START_Y + drop.size) {
+                // Still falling vertically to reach slope start
+                drop.y -= 0.5f * deltaTime; // Controlled vertical drop
 
-                // Check if exit is now free
-                if (!exitOccupied && drop.waitTimer > 0.1f) {
-                    drop.waitingToExit = false;
-                    exitOccupied = true;
+                // Check if reached slope start
+                if (drop.y <= TUNNEL_START_Y + drop.size) {
+                    drop.y = TUNNEL_START_Y + drop.size;
                 }
             }
             else {
-                // Move along tunnel towards exit
-                if (drop.x < TUNNEL_END_X) {
-                    drop.x += SLIDE_SPEED * deltaTime;
-                    drop.y = getTunnelY(drop.x) + drop.size;
+                // Now on the slope, handle waiting/exit logic
+                if (drop.waitingToExit) {
+                    // Wait at current position
+                    drop.waitTimer += deltaTime;
 
-                    // Check if reached exit
-                    if (drop.x >= TUNNEL_END_X) {
-                        drop.x = TUNNEL_END_X;
-                        drop.y = TUNNEL_END_Y + drop.size;
+                    // Check if exit is now free
+                    if (!exitOccupied && drop.waitTimer > 0.1f) {
+                        drop.waitingToExit = false;
+                        exitOccupied = true;
+                    }
+                }
+                else {
+                    // Move along tunnel slope towards exit
+                    if (drop.x < TUNNEL_END_X) {
+                        drop.x += SLIDE_SPEED * deltaTime;
+                        drop.y = getTunnelY(drop.x) + drop.size;
 
-                        // Wait a bit at exit, then fall
-                        drop.waitTimer += deltaTime;
-                        if (drop.waitTimer > EXIT_WAIT_TIME) {
-                            drop.collisionState = 2;
-                            drop.isInTunnel = false;
-                            exitOccupied = false;
+                        // Check if reached exit
+                        if (drop.x >= TUNNEL_END_X) {
+                            drop.x = TUNNEL_END_X;
+                            drop.y = TUNNEL_END_Y + drop.size;
+
+                            // Wait a bit at exit, then fall to ice cream
+                            drop.waitTimer += deltaTime;
+                            if (drop.waitTimer > EXIT_WAIT_TIME) {
+                                drop.collisionState = 2; // Falling from exit
+                                drop.isInTunnel = false;
+                                exitOccupied = false;
+                            }
                         }
                     }
                 }
             }
+            if (drop.x >= TUNNEL_END_X - 0.01f && drop.collisionState == 1) {
+                drop.collisionState = 2;
+                drop.isInTunnel = false;
+
+                // RANDOM velocities to spread sprinkles across cup
+                std::uniform_real_distribution<> disExitVX(-0.05f, 0.2f); // Mostly forward, some random
+                std::uniform_real_distribution<> disExitVY(-0.02f, 0.1f); // Small vertical variation
+
+                drop.vx = disExitVX(gen);
+                drop.vy = disExitVY(gen);
+            }
             break;
 
         case 2: // Falling from tunnel exit to ice cream
-            // Check for ice cream collision
-            if (drop.y - drop.size <= FINAL_GROUND_Y) {
-                drop.y = FINAL_GROUND_Y + drop.size;
+        {
+            // Apply gravity
+            float highestIceCream = FINAL_GROUND_Y;
+
+            drop.vy += GRAVITYS * deltaTime;
+            drop.rotation += drop.rotationSpeed * deltaTime;
+
+            // Update position
+            drop.x += drop.vx * deltaTime;
+            drop.y += drop.vy * deltaTime;
+
+            // Calculate surface height at this position
+            float surfaceHeight = FINAL_GROUND_Y; // Default to floor
+
+            // Check if sprinkle is over the cup area (-0.5 to 0.5)
+            if (drop.x > 0.0f && drop.x < 0.8f) {
+                // Find the highest ice cream flavor
+
+                if (vanillaFilled && vanillaLevel > highestIceCream) {
+                    highestIceCream = vanillaLevel - 0.8;
+                }
+                if (chocolateFilled && chocolateLevel > highestIceCream) {
+                    highestIceCream = chocolateLevel - 0.8;
+                }
+                if (mixedFilled && mixedLevel > highestIceCream) {
+                    highestIceCream = mixedLevel - 0.8;
+                }
+
+                surfaceHeight = highestIceCream;
+            }
+
+            // Check for collision with surface (ice cream or floor)
+            if (drop.y - drop.size <= surfaceHeight) {
+                // Check if we're in the cup area
+                bool isInCup = (drop.x > 0.0f && drop.x < 0.7f);
+
+                if (isInCup && surfaceHeight > FINAL_GROUND_Y + 0.01f) {
+                    static std::uniform_real_distribution<> heightDist(0.01f, abs(highestIceCream/2));
+                    float heightVariation = heightDist(gen);
+
+                    // Ensure we don't go below the base ice cream level
+                    drop.y = std::max(surfaceHeight, surfaceHeight + heightVariation) + drop.size;
+                }
+                else {
+                    // On floor or no ice cream - use exact surface
+                    drop.y = surfaceHeight + drop.size;
+                }
+
                 drop.vy = 0.0f;
-                drop.vx = 0.0f;
-                drop.rotationSpeed = 0.0f;
+                drop.vx *= 0.4f;
+                drop.rotationSpeed *= 0.5f;
                 drop.collisionState = 3;
             }
-            break;
+        }
+        break;
 
-        case 3: // On ice cream - no movement
-            drop.vx = 0.0f;
-            drop.vy = 0.0f;
-            drop.rotationSpeed = 0.0f;
+        case 3: // On surface (settled)
+            drop.vx *= FRICTION; // Apply friction
+            drop.rotationSpeed *= FRICTION;
+
+            // Stop completely if velocities are very small
+            if (fabs(drop.vx) < 0.01f) drop.vx = 0.0f;
+            if (fabs(drop.rotationSpeed) < 0.01f) drop.rotationSpeed = 0.0f;
             break;
         }
 
-        // Side boundaries (only for falling sprinkles)
+        // Side boundaries only for falling sprinkles (state 0 or 2)
         if (drop.collisionState == 0 || drop.collisionState == 2) {
             if (drop.x - drop.size < -1.0f) {
                 drop.x = -1.0f + drop.size;
-                drop.vx = 0.0f;
+                drop.vx = -drop.vx * DAMPING;
             }
             if (drop.x + drop.size > 1.0f) {
                 drop.x = 1.0f - drop.size;
-                drop.vx = 0.0f;
+                drop.vx = -drop.vx * DAMPING;
             }
         }
-
-        // Stop completely if velocities are very small
-        if (fabs(drop.vy) < 0.01f) drop.vy = 0.0f;
-        if (fabs(drop.vx) < 0.01f) drop.vx = 0.0f;
-        if (fabs(drop.rotationSpeed) < 0.01f) drop.rotationSpeed = 0.0f;
 
         // Deactivate if below screen
         if (drop.y < -2.0f) {
@@ -272,4 +353,7 @@ void drawSprinkles(const Sprinkle& drop, unsigned int shader, unsigned int VAO) 
 
     glBindVertexArray(VAO);
     glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
+}
+void resetSprinkles() {
+    sprinkles.clear();
 }

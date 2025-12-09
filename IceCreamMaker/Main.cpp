@@ -24,8 +24,17 @@ unsigned spoonTexture;
 unsigned circularTexture;
 unsigned nameTexture;
 
+// Add these near your other global variables in main.cpp:
+bool vanillaFilled = false;
+float vanillaLevel = 0.0f;
+bool chocolateFilled = false;
+float chocolateLevel = 0.0f;
+bool mixedFilled = false;
+float mixedLevel = 0.0f;
+float cupBottomY = -0.5f;
+
 float spoonX = 0.0f, spoonY = 0.0f;
-float spoonSize = 0.1f;
+float spoonSize = 0.2f;
 bool mousePressed = false;
 
 // Bite marks - now only store positions, we'll draw them differently
@@ -67,6 +76,7 @@ void key_callback(GLFWwindow* window, int key, int scancode, int action, int mod
         case GLFW_KEY_R:
             resetCup();
             biteMarks.clear();
+            resetSprinkles();
             break;
         }   
     }
@@ -216,6 +226,7 @@ int main() {
     GLFWmonitor* monitor = glfwGetPrimaryMonitor();
     const GLFWvidmode* mode = glfwGetVideoMode(monitor);
     GLFWwindow* window = glfwCreateWindow(mode->width, mode->height, "Ice Cream Machine", monitor, NULL);
+    //GLFWwindow* window = glfwCreateWindow(800, 800, "Vezba 2", NULL, NULL);
 
     if (!window) return endProgram("Failed to create window");
 
@@ -226,9 +237,7 @@ int main() {
 
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-    /*cursorReleased = loadImageToCursor("res/cursor.png");
-    cursorPressed = loadImageToCursor("res/cursor_pressed.png");*/
-    //glfwSetCursor(window, cursorReleased);
+ 
     // Initialize systems
     initSprinkles();
     initIceCream();
@@ -301,6 +310,13 @@ int main() {
         double currentTime = glfwGetTime();
         double deltaTime = currentTime - lastUpdateTime;
         lastUpdateTime = currentTime;
+        vanillaFilled = vanillaFill.isFilled;
+        vanillaLevel = vanillaFill.fillLevel;
+        chocolateFilled = chocolateFill.isFilled;
+        chocolateLevel = chocolateFill.fillLevel;
+        mixedFilled = mixedFill.isFilled;
+        mixedLevel = mixedFill.fillLevel;
+        cupBottomY = CUP_BOTTOM_POS_Y;
 
         updateLevers(deltaTime);
         updateIceCreamDrops(deltaTime);
@@ -339,12 +355,23 @@ int main() {
         }
 
         // Draw cup front (on top of everything)
-        drawBiteMarks(rectShader, VAO_spoon, circularTexture); // or drawBiteMarks() if using immediate mode
+        
+
 
         // Draw the machine and levers (on top of cup)
         drawRect(rectShader, VAO_machine, machineTexture, 0.0f, 0.0f, 1.0f, 1.0f);
         drawRect(rectShader, VAO_name, nameTexture, 0.0f, 0.0f, 1.0f, 1.0f);
         drawRect(rectShader, VAO_cup, cupFrontTexture, 0.0f, 0.0f, 1.0f, 1.0f);
+        static double lastSprinkleSpawnTime = 0.0;
+        if (sprinklesOpen && currentTime - lastSprinkleSpawnTime > 0.08f) {
+            spawnSprinkles();
+            lastSprinkleSpawnTime = currentTime;
+        }
+
+        for (const auto& drop : sprinkles) {
+            drawSprinkles(drop, particleShader, particleVAO);
+        }
+        drawBiteMarks(rectShader, VAO_spoon, circularTexture); // or drawBiteMarks() if using immediate mode
 
         iceCreamLever(1, leverPositionVanilla, rectShader, VAO_leverVertical, VAO_leverHorizontal);
         iceCreamLever(2, leverPositionMixed, rectShader, VAO_leverVertical, VAO_leverHorizontal);
@@ -358,15 +385,7 @@ int main() {
         }
 
         
-        static double lastSprinkleSpawnTime = 0.0;
-        if (sprinklesOpen && currentTime - lastSprinkleSpawnTime > 0.08f) {
-            spawnSprinkles();
-            lastSprinkleSpawnTime = currentTime;
-        }
-
-        for (const auto& drop : sprinkles) {
-            drawSprinkles(drop, particleShader, particleVAO);
-        }
+        
         drawRect(rectShader, VAO_spoon, spoonTexture, spoonX, spoonY, spoonSize, spoonSize);
 
         glfwSwapBuffers(window);
