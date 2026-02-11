@@ -128,7 +128,14 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="CupController.cpp" />
     <ClCompile Include="IceCreamMaker3d.cpp" />
+    <ClCompile Include="IceCreamSystem.cpp" />
+    <ClCompile Include="model.cpp" />
+    <ClCompile Include="PourSystem.cpp" />
+    <ClCompile Include="RenderContext.cpp" />
+    <ClCompile Include="Resources.cpp" />
+    <ClCompile Include="Scene.cpp" />
   </ItemGroup>
   <ItemGroup>
     <None Include="basic.frag" />
@@ -136,10 +143,17 @@
     <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="CupController.h" />
+    <ClInclude Include="IceCreamSystem.h" />
     <ClInclude Include="mesh.hpp" />
     <ClInclude Include="model.hpp" />
+    <ClInclude Include="PourSystem.h" />
+    <ClInclude Include="RenderContext.h" />
+    <ClInclude Include="Resources.h" />
+    <ClInclude Include="Scene.h" />
     <ClInclude Include="shader.hpp" />
     <ClInclude Include="stb_image.h" />
+    <ClInclude Include="Util.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
