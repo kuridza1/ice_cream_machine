@@ -131,6 +131,7 @@
     <ClCompile Include="CupController.cpp" />
     <ClCompile Include="IceCreamMaker3d.cpp" />
     <ClCompile Include="IceCreamSystem.cpp" />
+    <ClCompile Include="LeverSystem.cpp" />
     <ClCompile Include="model.cpp" />
     <ClCompile Include="PourSystem.cpp" />
     <ClCompile Include="RenderContext.cpp" />
@@ -145,6 +146,7 @@
   <ItemGroup>
     <ClInclude Include="CupController.h" />
     <ClInclude Include="IceCreamSystem.h" />
+    <ClInclude Include="LeverSystem.h" />
     <ClInclude Include="mesh.hpp" />
     <ClInclude Include="model.hpp" />
     <ClInclude Include="PourSystem.h" />

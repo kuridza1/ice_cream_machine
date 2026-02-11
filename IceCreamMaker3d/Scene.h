@@ -6,6 +6,7 @@
 #include "PourSystem.h"
 #include "IceCreamSystem.h"
 #include "RenderContext.h"
+#include "LeverSystem.h"
 
 class Scene
 {
@@ -24,6 +25,7 @@ private:
     CupController cupCtrl;
     PourSystem pourSys;
     IceCreamSystem iceSys;
+    LeverSystem leverSys; 
 
     glm::vec3 iceCreamPosOffset;
 };

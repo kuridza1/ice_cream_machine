@@ -5,33 +5,51 @@
 Scene::Scene()
     : res(),
     cupCtrl(glm::radians(50.0f)),
+    // pivot/osa su "na slepo" default; dotegni pivotLocal da pogodi model
+    leverSys(glm::radians(60.0f),
+        glm::vec3(0.0f, 1.5f, 0.0f),   // pivotLocal (DOTEGNI)
+        glm::vec3(-1.0f, 0.0f, 0.0f),    // axisLocal (promeni u (0,0,1) ako treba)
+        5.0f),                          // brzina animacije
     pourSys(0.4f, 0.5f, 0.0f, -1.2f),
     iceSys(0.08f, 0.5f, -0.85f, 0.0f, -1.2f),
     iceCreamPosOffset(0.0f, 0.0f, 0.0f)
 {
 }
 
+
+
 void Scene::onSpacePressed()
 {
-    pourSys.toggle();
+    leverSys.toggle();
 }
+
 
 void Scene::onResetPressed()
 {
     pourSys.reset();
     iceSys.reset();
-    // cupCtrl intentionally NOT reset -> cup keeps spinning through reset
+    leverSys.resetUp(); // NEW
+    // cupCtrl intentionally NOT reset
 }
+
 
 void Scene::update(float dt)
 {
     cupCtrl.update(dt);
+    leverSys.update(dt);
+
+    // Pravilo: sipanje krene TEK kad je poluga skroz dole
+    if (leverSys.isFullyDown())
+        pourSys.start();
+    else
+        pourSys.requestStop();
 
     pourSys.update(dt);
 
     bool contactNow = pourSys.isContactPast(iceSys.contactT());
     iceSys.update(dt, pourSys.isActiveOrStopping(), contactNow);
 }
+
 
 void Scene::render(const RenderContext& ctx)
 {
@@ -58,8 +76,10 @@ void Scene::render(const RenderContext& ctx)
     res.machine.Draw(sh);
 
     // LEVER
-    sh.setMat4("uM", base);
+    glm::mat4 leverM = leverSys.apply(base);
+    sh.setMat4("uM", leverM);
     res.lever.Draw(sh);
+
 
     // CUP (spins always)
     glm::mat4 cupM = cupCtrl.apply(base);

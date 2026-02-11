@@ -30,6 +30,12 @@ public:
     bool isContactPast(float tContact) const;
 
     void draw(const glm::mat4& base, Shader& shader, Model& pourModel) const;
+    // PourSystem.h (dodaj u public)
+    void start();        // Idle/Stopping -> Pouring
+    void requestStop();  // Pouring -> Stopping
+    bool isPouring() const;
+    bool isStopping() const;
+    bool isIdle() const;
 
 private:
     float pourSpeed;

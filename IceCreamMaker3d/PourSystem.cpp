@@ -132,3 +132,19 @@ void PourSystem::draw(const glm::mat4& base, Shader& shader, Model& pourModel) c
     if (p1Active) drawAt(t1);
     if (p2Active) drawAt(t2);
 }
+// PourSystem.cpp (dodaj implementacije)
+void PourSystem::start()
+{
+    if (st == State::Idle || st == State::Stopping)
+        st = State::Pouring;
+}
+
+void PourSystem::requestStop()
+{
+    if (st == State::Pouring)
+        st = State::Stopping;
+}
+
+bool PourSystem::isPouring() const { return st == State::Pouring; }
+bool PourSystem::isStopping() const { return st == State::Stopping; }
+bool PourSystem::isIdle() const { return st == State::Idle; }
