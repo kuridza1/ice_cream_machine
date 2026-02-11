@@ -9,8 +9,19 @@ uniform vec3 uLightPos;
 uniform vec3 uViewPos;
 uniform vec3 uLightColor;
 
+// NEW
+uniform int uUseProgressMask;   // 0/1
+uniform float uProgress;        // 0..1
+
 void main()
 {
+    if (uUseProgressMask == 1)
+    {
+        // Pretpostavka: chUV.x je 0..1 duž krive
+        if (chUV.x > uProgress)
+            discard;
+    }
+
     float ambientStrength = 0.1;
     vec3 ambient = ambientStrength * uLightColor;
 
