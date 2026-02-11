@@ -8,6 +8,7 @@
 #include <fstream>
 #include <sstream>
 #include <algorithm>
+#include <cmath>
 
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>
@@ -71,18 +72,18 @@ int main()
     // -------------------------
     // CONTROL (SPACE start / graceful stop)
     // -------------------------
-    bool pouring = false;   // "running" mode (spawns new instances)
-    bool stopping = false;  // "graceful stop" mode (no new spawns, let active finish)
+    bool pouring = false;   // running (spawns new pours)
+    bool stopping = false;  // graceful stop (no new spawns, let active finish)
 
     // -------------------------
     // POUR ANIM (2 instances, overlap)
     // -------------------------
     const float pourSpeed = 0.4f;
     float t1 = 0.0f, t2 = 0.0f;
-    bool p1Active = true;   // primary instance exists (time starts at 0 when running)
+    bool p1Active = true;
     bool p2Active = false;
 
-    const float overlap = 0.5f; // start next before finish (increase => less chance of gaps)
+    const float overlap = 0.5f;
 
     const float pourStartY = 0.0f;
     const float pourEndY = -1.2f;
@@ -93,13 +94,19 @@ int main()
     // ICE CREAM (reveal mask; grows only after pour reaches cup)
     // -------------------------
     float iceT = 0.0f;
-    const float iceSpeed = 0.15f;
+    const float iceSpeed = 0.07f;
 
     const float cupContactY = -0.85f;
     float contactGrace = 0.0f;
     const float contactGraceTime = 0.5f;
 
+    // Offset sladoleda u odnosu na čašu (u koordinatama čaše)
     const glm::vec3 iceCreamPosOffset(0.0f, 0.0f, 0.0f);
+
+    // -------------------------
+    // CUP ROTATION while pouring
+    // -------------------------
+    const float cupSpinSpeed = glm::radians(80.0f); // menjaj po potrebi
 
     float lastTime = (float)glfwGetTime();
 
@@ -119,18 +126,15 @@ int main()
         {
             if (!pouring && !stopping)
             {
-                // start
                 pouring = true;
             }
             else if (pouring)
             {
-                // request graceful stop: stop spawning new, but let current finish
                 pouring = false;
                 stopping = true;
             }
             else if (stopping)
             {
-                // optional: re-start while stopping
                 stopping = false;
                 pouring = true;
             }
@@ -152,7 +156,6 @@ int main()
 
         // -------------------------
         // UPDATE POUR (animate while pouring OR stopping)
-        // During stopping: do NOT start new instances; only let active ones finish.
         // -------------------------
         if (pouring || stopping)
         {
@@ -161,7 +164,7 @@ int main()
             if (p1Active) t1 += step;
             if (p2Active) t2 += step;
 
-            // Start next instance ONLY while pouring (not during stopping)
+            // Start next ONLY while pouring (not during stopping)
             if (!stopping)
             {
                 if (p1Active && !p2Active && t1 >= 1.0f - overlap)
@@ -190,12 +193,12 @@ int main()
                 t2 = 0.0f;
             }
 
-            // If we're stopping and both instances are done -> fully stopped
+            // If stopping and both done -> fully stopped
             if (stopping && !p1Active && !p2Active)
             {
                 stopping = false;
 
-                // Prepare clean state for next start:
+                // Clean state for next start
                 t1 = 0.0f; t2 = 0.0f;
                 p1Active = true;
                 p2Active = false;
@@ -258,12 +261,26 @@ int main()
         base = glm::translate(base, glm::vec3(0.0f, -1.0f, 0.0f));
         base = glm::scale(base, glm::vec3(1.4f));
 
+        // MACHINE
         unifiedShader.setMat4("uM", base);
         machine.Draw(unifiedShader);
-        cup.Draw(unifiedShader);
+
+        // LEVER
+        unifiedShader.setMat4("uM", base);
         lever.Draw(unifiedShader);
 
-        // Helper: draw one pour instance at time t (0..1)
+        // CUP transform (računamo jednom i koristimo i za sladoled)
+        glm::mat4 cupM = base;
+        if (pouring || stopping)
+        {
+            float angle = now * cupSpinSpeed;
+            cupM = glm::rotate(cupM, angle, glm::vec3(0.0f, 1.0f, 0.0f));
+        }
+
+        unifiedShader.setMat4("uM", cupM);
+        cup.Draw(unifiedShader);
+
+        // POUR instances
         auto drawPourAt = [&](float t)
             {
                 glm::vec3 off = glm::mix(pourStartOffset, pourEndOffset, clamp01(t));
@@ -276,11 +293,11 @@ int main()
         if (p1Active) drawPourAt(t1);
         if (p2Active) drawPourAt(t2);
 
-        // ICE CREAM: reveal mask using iceT
+        // ICE CREAM: da se pomera/rotira zajedno sa čašom -> koristi cupM kao parent
         unifiedShader.setInt("uUseProgressMask", 1);
         unifiedShader.setFloat("uProgress", iceT);
 
-        glm::mat4 iceM = base;
+        glm::mat4 iceM = cupM; // KLJUČ: prati čašu
         iceM = glm::translate(iceM, iceCreamPosOffset);
 
         unifiedShader.setMat4("uM", iceM);
