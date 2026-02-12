@@ -102,15 +102,35 @@ int main()
             glfwSetWindowShouldClose(window, true);
 
         // --- EDGE KEYS (kao pre) ---
+        static bool oneWasDown = false;
+        static bool twoWasDown = false;
         static bool spaceWasDown = false;
+        static bool enterWasDown = false;
         static bool rWasDown = false;
         static bool fWasDown = false;
         static bool pWasDown = false;
+        
+        bool oneDown = glfwGetKey(window, GLFW_KEY_1) == GLFW_PRESS;
+        if (oneDown && !oneWasDown)
+            scene.on1Pressed();
+
+        oneWasDown = oneDown;
+        
+        bool twoDown = glfwGetKey(window, GLFW_KEY_2) == GLFW_PRESS;
+        if (twoDown && !twoWasDown)
+            scene.on2Pressed();
+
+        twoWasDown = twoDown;
         
         bool spaceDown = glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS;
         if (spaceDown && !spaceWasDown)
             scene.onSpacePressed();
         spaceWasDown = spaceDown;
+
+        bool enterDown = glfwGetKey(window, GLFW_KEY_ENTER) == GLFW_PRESS;
+        if (enterDown && !enterWasDown)
+            scene.onEnterPressed();
+        enterWasDown = enterDown;
 
         bool rDown = glfwGetKey(window, GLFW_KEY_R) == GLFW_PRESS;
         if (rDown && !rWasDown)
@@ -156,7 +176,7 @@ int main()
             cameraUp
         );
 
-        ctx.lightPos = glm::vec3(2.0f, 3.0f, 4.0f);
+        ctx.lightPos = glm::vec3(-2.0f, 4.0f, 3.0f);
         ctx.viewPos = cameraPos;
         ctx.lightColor = glm::vec3(1.0f);
 

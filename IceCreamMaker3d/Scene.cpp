@@ -5,23 +5,26 @@
 Scene::Scene()
     : res(),
     cupCtrl(glm::radians(50.0f)),
-    // pivot/osa su "na slepo" default; dotegni pivotLocal da pogodi model
     leverSys(glm::radians(60.0f),
-        glm::vec3(0.0f, 1.5f, 0.0f),   // pivotLocal (DOTEGNI)
-        glm::vec3(-1.0f, 0.0f, 0.0f),    // axisLocal (promeni u (0,0,1) ako treba)
-        5.0f),                          // brzina animacije
+        glm::vec3(0.0f, 1.5f, 0.0f),  
+        glm::vec3(-1.0f, 0.0f, 0.0f),    
+        5.0f),                         
     pourSys(0.4f, 0.5f, 0.0f, -1.2f),
     iceSys(0.08f, 0.5f, -0.85f, 0.0f, -1.2f),
     iceCreamPosOffset(0.0f, 0.0f, 0.0f),
     powerSys(glm::vec3(0.0f, 0.0f, -1.8),
          glm::vec3(1, 0, 0),
-        0.0f, -30.0f, 220.0f)
+        0.0f, -30.0f, 220.0f),
+    btnSys()
+
 {
+    btnSys.init(0.03f, 18.0f, 12.0f, glm::vec3(0,0,-1));
+
 }
 
 
 
-void Scene::onSpacePressed()
+void Scene::onEnterPressed()
 {
     leverSys.toggle();
 }
@@ -33,11 +36,11 @@ void Scene::onResetPressed()
     iceSys.reset();
     leverSys.resetUp();
     sprinkleSys.reset();
+	btnSys.reset();
 }
 
 void Scene::onSPressed()
 {
-    // Toggle sprinkle emission
     sprinkleSys.setOpen(!sprinkleSys.isOpen());
 }
 
@@ -46,9 +49,9 @@ void Scene::onPPressed()
 	powerSys.toggle();
 }
 
-
-// Scene.cpp — minimal changes: read FBX node markers and feed SprinkleSystem
-// Assumes your res.machine is the FBX that contains the empties/nodes.
+void Scene::on1Pressed() { btnSys.press(ButtonId::One); }
+void Scene::on2Pressed() { btnSys.press(ButtonId::Two); }
+void Scene::onSpacePressed() { btnSys.press(ButtonId::Mix); } 
 
 void Scene::update(float dt)
 {
@@ -64,6 +67,7 @@ void Scene::update(float dt)
             pourSys.requestStop();
 
         pourSys.update(dt);
+        btnSys.update(dt);
 
         bool contactNow = pourSys.isContactPast(iceSys.contactT());
         iceSys.update(dt, pourSys.isActiveOrStopping(), contactNow);
@@ -93,7 +97,6 @@ void Scene::update(float dt)
 
 
 
-        // Cup/ice collider in world (simple sphere)
         glm::vec3 iceCenterW = glm::vec3(iceM * glm::vec4(0, 0, 0, 1));
         glm::vec3 cupCenterW = glm::vec3(cupM * glm::vec4(0, 0, 0, 1));
 
@@ -115,78 +118,171 @@ void Scene::render(const RenderContext& ctx)
     auto& sh = res.shader;
     sh.use();
 
+    // ----------------------------------------------------
+    // GLOBAL UNIFORMS
+    // ----------------------------------------------------
+
     sh.setMat4("uP", ctx.P);
     sh.setMat4("uV", ctx.V);
     sh.setVec3("uLightPos", ctx.lightPos.x, ctx.lightPos.y, ctx.lightPos.z);
     sh.setVec3("uViewPos", ctx.viewPos.x, ctx.viewPos.y, ctx.viewPos.z);
     sh.setVec3("uLightColor", ctx.lightColor.x, ctx.lightColor.y, ctx.lightColor.z);
 
-    // Default: no progress mask
+    sh.setInt("uFlavor", (int)btnSys.selectedFlavor());
+
     sh.setInt("uUseProgressMask", 0);
     sh.setFloat("uProgress", 1.0f);
+
+    sh.setInt("uUseEmission", 0);
+    sh.setFloat("uEmissionStrength", 0.0f);
+
+    // ----------------------------------------------------
+    // BUTTON POINT LIGHT (affects whole scene)
+    // ----------------------------------------------------
+
+    if (powerSys.isOn())
+    {
+        sh.setInt("uUseBtnLight", 1);
+        sh.setVec3("uBtnLightColor", 1.0f, 0.85f, 0.7f);
+        sh.setFloat("uBtnLightIntensity", 2.5f);
+
+        // world position of LED (adjust numbers if needed)
+        glm::mat4 base(1.0f);
+        base = glm::translate(base, glm::vec3(0.0f, -1.0f, 0.0f));
+        base = glm::scale(base, glm::vec3(1.4f));
+
+        glm::vec3 btnLightPos =
+            glm::vec3(base * glm::vec4(-0.2f, 1.0f, -0.2f, 1.0f));
+
+        sh.setVec3("uBtnLightPos",
+            btnLightPos.x,
+            btnLightPos.y,
+            btnLightPos.z);
+    }
+    else
+    {
+        sh.setInt("uUseBtnLight", 0);
+    }
+
+    // ----------------------------------------------------
+    // BASE MATRIX
+    // ----------------------------------------------------
 
     glm::mat4 base(1.0f);
     base = glm::translate(base, glm::vec3(0.0f, -1.0f, 0.0f));
     base = glm::scale(base, glm::vec3(1.4f));
 
-    // 1) OPAQUE PASS (bez blendinga)
     glDisable(GL_BLEND);
-    glDepthMask(GL_TRUE);          // normalno upisuj depth
+    glDepthMask(GL_TRUE);
 
-    sh.setInt("uUseProgressMask", 0);
-    sh.setFloat("uProgress", 1.0f);
+    // ----------------------------------------------------
+    // MACHINE
+    // ----------------------------------------------------
 
     sh.setMat4("uM", base);
     res.machine.Draw(sh);
     res.sprinkles.Draw(sh);
 
-
-
     sprinkleSys.setModels({ &res.sprinkle });
     sprinkleSys.draw(sh);
 
+    // ----------------------------------------------------
+    // POWER BUTTON (rotating switch)
+    // ----------------------------------------------------
 
-    glm::mat4 powerM = base;
-    powerM = powerSys.applyTo(powerM);
-
+    glm::mat4 powerM = powerSys.applyTo(base);
     sh.setMat4("uM", powerM);
     res.power.Draw(sh);
 
+    // ----------------------------------------------------
+    // LEVER
+    // ----------------------------------------------------
 
-    
-
-    // lever
     glm::mat4 leverM = leverSys.apply(base);
     sh.setMat4("uM", leverM);
     res.lever.Draw(sh);
 
-    // cup
+    // ----------------------------------------------------
+    // CUP
+    // ----------------------------------------------------
+
     glm::mat4 cupM = cupCtrl.apply(base);
     sh.setMat4("uM", cupM);
     res.cup.Draw(sh);
 
-    // pour
-    pourSys.draw(base, sh, res.pour);
+    // ----------------------------------------------------
+    // ICE CREAM (progress mask)
+    // ----------------------------------------------------
 
-    // ice cream (mask)
     sh.setInt("uUseProgressMask", 1);
     sh.setFloat("uProgress", iceSys.progress());
+
     glm::mat4 iceM = glm::translate(cupM, iceCreamPosOffset);
     sh.setMat4("uM", iceM);
     res.iceCream.Draw(sh);
 
-    // 2) TRANSPARENT PASS (glass last)
+    // reset mask
+    sh.setInt("uUseProgressMask", 0);
+    sh.setFloat("uProgress", 1.0f);
+
+    // ----------------------------------------------------
+    // BUTTONS (normal body)
+    // ----------------------------------------------------
+
+    sh.setInt("uUseEmission", 0);
+    sh.setFloat("uEmissionStrength", 0.0f);
+
+    sh.setMat4("uM", btnSys.applyTo(base, ButtonId::One));
+    res.button1.Draw(sh);
+
+    sh.setMat4("uM", btnSys.applyTo(base, ButtonId::Two));
+    res.button2.Draw(sh);
+
+    sh.setMat4("uM", btnSys.applyTo(base, ButtonId::Mix));
+    res.buttonMix.Draw(sh);
+
+    // ----------------------------------------------------
+    // LED PART (EMISSION ONLY)
+    // ----------------------------------------------------
+
+    if (powerSys.isOn())
+    {
+        sh.setInt("uUseEmission", 1);
+        sh.setVec3("uEmissionColor", 1.0f, 0.85f, 0.7f);
+        sh.setFloat("uEmissionStrength", 2.5f);
+    }
+    else
+    {
+        sh.setInt("uUseEmission", 0);
+        sh.setFloat("uEmissionStrength", 0.0f);
+    }
+
+    sh.setMat4("uM", base);
+    res.buttonLed.Draw(sh);
+
+    // reset emission
+    sh.setInt("uUseEmission", 0);
+    sh.setFloat("uEmissionStrength", 0.0f);
+
+    // ----------------------------------------------------
+    // POUR
+    // ----------------------------------------------------
+
+    pourSys.draw(base, sh, res.pour);
+
+    // ----------------------------------------------------
+    // GLASS (transparent last)
+    // ----------------------------------------------------
+
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
-    glDepthMask(GL_FALSE);         // klju?: NE upisuj depth za staklo
-    sh.setInt("uUseProgressMask", 0);
-    sh.setFloat("uProgress", 1.0f);
+    glDepthMask(GL_FALSE);
 
     sh.setMat4("uM", base);
     res.sprinklesContainer.Draw(sh);
 
     glDepthMask(GL_TRUE);
     glDisable(GL_BLEND);
-
 }
+

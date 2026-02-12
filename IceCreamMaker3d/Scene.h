@@ -9,16 +9,21 @@
 #include "LeverSystem.h"
 #include "SprinkleSystem.h"
 #include "PowerSystem.h"
+#include "ButtonSystem.h"
 
 class Scene
 {
 public:
     Scene();
 
-    void onSpacePressed();
+    void onEnterPressed();
     void onResetPressed();
     void onSPressed();
     void onPPressed();
+
+    void on1Pressed();
+    void on2Pressed();
+    void onSpacePressed();
 
     void update(float dt);
 
@@ -33,5 +38,6 @@ private:
     LeverSystem leverSys; 
     SprinklesSystem sprinkleSys;
     PowerSystem powerSys;
+    ButtonSystem btnSys;
     glm::vec3 iceCreamPosOffset;
 };

@@ -14,9 +14,13 @@ struct Resources
     Model sprinkles;
     Model sprinkle;
     Model power;
-
+    Model button1;
+    Model button2;
+    Model buttonMix;
+	Model buttonLed;
     Shader shader;
 
 
     Resources();
+    void load();
 };
