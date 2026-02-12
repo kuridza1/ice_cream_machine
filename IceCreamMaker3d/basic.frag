@@ -12,6 +12,7 @@ uniform vec3 uLightColor;
 // NEW
 uniform int uUseProgressMask;   // 0/1
 uniform float uProgress;        // 0..1
+uniform sampler2D uDiffMap1;
 
 void main()
 {
@@ -35,7 +36,8 @@ void main()
     vec3 reflectDir = reflect(-lightDir, norm);
     float spec = pow(max(dot(viewDir, reflectDir), 0.0), 32.0);
     vec3 specular = specularStrength * spec * uLightColor;
+    vec4 tex = texture(uDiffMap1, chUV);
 
-    vec3 baseColor = vec3(0.85, 0.85, 0.9);
-    FragColor = vec4((ambient + diffuse + specular) * baseColor, 1.0);
+    vec3 lit = (ambient + diffuse + specular) * tex.rgb;
+    FragColor = vec4(lit, tex.a); 
 }

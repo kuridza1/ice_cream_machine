@@ -7,6 +7,7 @@
 #include "IceCreamSystem.h"
 #include "RenderContext.h"
 #include "LeverSystem.h"
+#include "SprinkleSystem.h"
 
 class Scene
 {
@@ -15,8 +16,10 @@ public:
 
     void onSpacePressed();
     void onResetPressed();
+    void onSPressed();
 
     void update(float dt);
+
     void render(const RenderContext& ctx);
 
 private:
@@ -26,6 +29,7 @@ private:
     PourSystem pourSys;
     IceCreamSystem iceSys;
     LeverSystem leverSys; 
+    SprinklesSystem sprinkleSys;
 
     glm::vec3 iceCreamPosOffset;
 };

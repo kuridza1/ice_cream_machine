@@ -10,8 +10,14 @@ struct Resources
     Model cup;
     Model lever;
     Model pour;
-
+    Model sprinklesContainer;
+    Model sprinkles;
+    Model sprinkle;
+	Model nozzle;
+	Model tunnelStart;
+	Model tunnelEnd;
     Shader shader;
+
 
     Resources();
 };

@@ -32,13 +32,22 @@ void Scene::onResetPressed()
     // cupCtrl intentionally NOT reset
 }
 
+void Scene::onSPressed()
+{
+    // Toggle sprinkle emission
+    sprinkleSys.setOpen(!sprinkleSys.isOpen());
+}
+
+
+
+// Scene.cpp — minimal changes: read FBX node markers and feed SprinkleSystem
+// Assumes your res.machine is the FBX that contains the empties/nodes.
 
 void Scene::update(float dt)
 {
     cupCtrl.update(dt);
     leverSys.update(dt);
 
-    // Pravilo: sipanje krene TEK kad je poluga skroz dole
     if (leverSys.isFullyDown())
         pourSys.start();
     else
@@ -48,11 +57,49 @@ void Scene::update(float dt)
 
     bool contactNow = pourSys.isContactPast(iceSys.contactT());
     iceSys.update(dt, pourSys.isActiveOrStopping(), contactNow);
+
+    glm::mat4 base(1.0f);
+    base = glm::translate(base, glm::vec3(0.0f, -1.0f, 0.0f));
+    base = glm::scale(base, glm::vec3(1.4f));
+
+    glm::mat4 cupM = cupCtrl.apply(base);
+    glm::mat4 iceM = glm::translate(cupM, iceCreamPosOffset);
+
+    glm::vec3 nozzleLocal(-1.1f, 0.9f, 0.0f);
+    glm::vec3 entLocal(-1.1f, 0.48f, 0.0f);
+
+    glm::vec3 startLocal(-1.1f, 0.48f, 0.0f);
+    glm::vec3 endLocal(-0.2f, 0.24f, 0.0f);
+
+    glm::vec3 nozzlePosW = glm::vec3(base * glm::vec4(nozzleLocal, 1));
+    glm::vec3 entW = glm::vec3(base * glm::vec4(entLocal, 1));
+    glm::vec3 startW = glm::vec3(base * glm::vec4(startLocal, 1));
+    glm::vec3 endW = glm::vec3(base * glm::vec4(endLocal, 1));
+
+    glm::vec3 nozzleDirW = glm::normalize(entW - nozzlePosW);
+
+    sprinkleSys.setNozzle(nozzlePosW, nozzleDirW, 0.02f);
+    sprinkleSys.setTunnel(entW, startW, endW);
+
+
+
+    // Cup/ice collider in world (simple sphere)
+    glm::vec3 iceCenterW = glm::vec3(iceM * glm::vec4(0, 0, 0, 1));
+    glm::vec3 cupCenterW = glm::vec3(cupM * glm::vec4(0, 0, 0, 1));
+
+    sprinkleSys.setCupRegion(cupCenterW, 0.1f);
+    sprinkleSys.setIceCollider(iceCenterW, 0.23f);
+
+    sprinkleSys.update(dt);
 }
+
 
 
 void Scene::render(const RenderContext& ctx)
 {
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
     auto& sh = res.shader;
     sh.use();
 
@@ -66,39 +113,56 @@ void Scene::render(const RenderContext& ctx)
     sh.setInt("uUseProgressMask", 0);
     sh.setFloat("uProgress", 1.0f);
 
-    // Base transform
-    glm::mat4 base = glm::mat4(1.0f);
+    glm::mat4 base(1.0f);
     base = glm::translate(base, glm::vec3(0.0f, -1.0f, 0.0f));
     base = glm::scale(base, glm::vec3(1.4f));
 
-    // MACHINE
+    // 1) OPAQUE PASS (bez blendinga)
+    glDisable(GL_BLEND);
+    glDepthMask(GL_TRUE);          // normalno upisuj depth
+
+    sh.setInt("uUseProgressMask", 0);
+    sh.setFloat("uProgress", 1.0f);
+
     sh.setMat4("uM", base);
     res.machine.Draw(sh);
 
-    // LEVER
+    res.sprinkles.Draw(sh);
+    sprinkleSys.setModels({ &res.sprinkle });
+    sprinkleSys.draw(sh);
+
+    // lever
     glm::mat4 leverM = leverSys.apply(base);
     sh.setMat4("uM", leverM);
     res.lever.Draw(sh);
 
-
-    // CUP (spins always)
+    // cup
     glm::mat4 cupM = cupCtrl.apply(base);
     sh.setMat4("uM", cupM);
     res.cup.Draw(sh);
 
-    // POUR
+    // pour
     pourSys.draw(base, sh, res.pour);
 
-    // ICE CREAM (follows cup)
+    // ice cream (mask)
     sh.setInt("uUseProgressMask", 1);
     sh.setFloat("uProgress", iceSys.progress());
-
-    glm::mat4 iceM = cupM;
-    iceM = glm::translate(iceM, iceCreamPosOffset);
+    glm::mat4 iceM = glm::translate(cupM, iceCreamPosOffset);
     sh.setMat4("uM", iceM);
     res.iceCream.Draw(sh);
 
-    // Restore defaults
+    // 2) TRANSPARENT PASS (glass last)
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
+    glDepthMask(GL_FALSE);         // klju?: NE upisuj depth za staklo
     sh.setInt("uUseProgressMask", 0);
     sh.setFloat("uProgress", 1.0f);
+
+    sh.setMat4("uM", base);
+    res.sprinklesContainer.Draw(sh);
+
+    glDepthMask(GL_TRUE);
+    glDisable(GL_BLEND);
+
 }

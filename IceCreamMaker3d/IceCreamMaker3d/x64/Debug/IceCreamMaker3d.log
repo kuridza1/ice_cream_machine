@@ -1,2 +1,5 @@
 ﻿  Scene.cpp
+C:\Users\Jovana\Desktop\Fakultet\Računarska grafika\ice_cream_machine\IceCreamMaker3d\SprinkleSystem.h(98,25): warning C4305: 'initializing': truncation from 'double' to 'float'
+  (compiling source file 'Scene.cpp')
+  
   IceCreamMaker3d.vcxproj -> C:\Users\Jovana\Desktop\Fakultet\Računarska grafika\ice_cream_machine\IceCreamMaker3d\x64\Debug\IceCreamMaker3d.exe
