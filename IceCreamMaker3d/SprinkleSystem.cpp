@@ -53,6 +53,11 @@ void SprinklesSystem::setCupRegion(const glm::vec3& center, float radius)
     m_cupCenter = center;
     m_cupRadius = radius;
 }
+void SprinklesSystem::setCupMatrix(const glm::mat4& cupWorld)
+{
+    m_cupM = cupWorld;
+    m_cupInvM = glm::inverse(cupWorld);
+}
 
 void SprinklesSystem::setIceCollider(const glm::vec3& center, float radius)
 {
@@ -278,6 +283,14 @@ void SprinklesSystem::update(double dt)
                 d.vel = glm::vec3(d.vel.x * 0.4f, 0.0f, d.vel.z * 0.4f);
                 d.rotSpeed *= 0.5f;
                 d.state = 3;
+                // posle što postaviš d.pos u world-u:
+                glm::vec4 lp = m_cupInvM * glm::vec4(d.pos, 1.0f);
+                d.cupLocalPos = glm::vec3(lp);
+                d.attachedToCup = true;
+
+                // opciono: zapamti lokalnu rotaciju (da ne “menja” kad ?aša rotira)
+                d.cupLocalRot = d.rot;
+
             }
             else
             {
@@ -288,6 +301,8 @@ void SprinklesSystem::update(double dt)
                     d.vel.x *= 0.4f;
                     d.vel.z *= 0.4f;
                     d.state = 3;
+                    d.attachedToCup = false;
+
                 }
             }
         }
@@ -339,14 +354,23 @@ void SprinklesSystem::draw(Shader& sh)
     {
         if (!s.active) continue;
 
-        glm::mat4 M(1.0f);
-        M = glm::translate(M, s.pos);
-        M = glm::rotate(M, s.rot.y, glm::vec3(0, 1, 0));
-        M = glm::rotate(M, s.rot.x, glm::vec3(1, 0, 0));
-        M = glm::rotate(M, s.rot.z, glm::vec3(0, 0, 1));
-        M = glm::scale(M, glm::vec3(s.size));
+        glm::vec3 drawPos = s.pos;
+        glm::vec3 drawRot = s.rot;
 
-        sh.setMat4("uM", M);
+        if (s.state == 3 && s.attachedToCup)
+        {
+            drawPos = glm::vec3(m_cupM * glm::vec4(s.cupLocalPos, 1.0f));
+            drawRot = s.cupLocalRot;
+        }
+
+        glm::mat4 M(1.0f);
+        M = glm::translate(M, drawPos);
+        M = glm::rotate(M, drawRot.y, glm::vec3(0, 1, 0));
+        M = glm::rotate(M, drawRot.x, glm::vec3(1, 0, 0));
+        M = glm::rotate(M, drawRot.z, glm::vec3(0, 0, 1));
+        M = glm::scale(M, glm::vec3(s.size)); // ovo je tvoj scale za sprinkle
+
+        sh.setMat4("uM", M); // <-- OBAVEZNO
 
         int idx = s.modelIndex;
         if (idx < 0) idx = 0;
@@ -355,3 +379,5 @@ void SprinklesSystem::draw(Shader& sh)
         m_models[idx]->Draw(sh);
     }
 }
+
+

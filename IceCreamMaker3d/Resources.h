@@ -13,9 +13,8 @@ struct Resources
     Model sprinklesContainer;
     Model sprinkles;
     Model sprinkle;
-	Model nozzle;
-	Model tunnelStart;
-	Model tunnelEnd;
+    Model power;
+
     Shader shader;
 
 

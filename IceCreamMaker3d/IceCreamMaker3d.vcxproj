@@ -134,6 +134,7 @@
     <ClCompile Include="LeverSystem.cpp" />
     <ClCompile Include="model.cpp" />
     <ClCompile Include="PourSystem.cpp" />
+    <ClCompile Include="PowerSystem.cpp" />
     <ClCompile Include="RenderContext.cpp" />
     <ClCompile Include="Resources.cpp" />
     <ClCompile Include="Scene.cpp" />
@@ -151,6 +152,7 @@
     <ClInclude Include="mesh.hpp" />
     <ClInclude Include="model.hpp" />
     <ClInclude Include="PourSystem.h" />
+    <ClInclude Include="PowerSystem.h" />
     <ClInclude Include="RenderContext.h" />
     <ClInclude Include="Resources.h" />
     <ClInclude Include="Scene.h" />

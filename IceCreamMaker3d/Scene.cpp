@@ -12,7 +12,10 @@ Scene::Scene()
         5.0f),                          // brzina animacije
     pourSys(0.4f, 0.5f, 0.0f, -1.2f),
     iceSys(0.08f, 0.5f, -0.85f, 0.0f, -1.2f),
-    iceCreamPosOffset(0.0f, 0.0f, 0.0f)
+    iceCreamPosOffset(0.0f, 0.0f, 0.0f),
+    powerSys(glm::vec3(0.0f, 0.0f, -1.8),
+         glm::vec3(1, 0, 0),
+        0.0f, -30.0f, 220.0f)
 {
 }
 
@@ -28,8 +31,8 @@ void Scene::onResetPressed()
 {
     pourSys.reset();
     iceSys.reset();
-    leverSys.resetUp(); // NEW
-    // cupCtrl intentionally NOT reset
+    leverSys.resetUp();
+    sprinkleSys.reset();
 }
 
 void Scene::onSPressed()
@@ -38,6 +41,10 @@ void Scene::onSPressed()
     sprinkleSys.setOpen(!sprinkleSys.isOpen());
 }
 
+void Scene::onPPressed() 
+{
+	powerSys.toggle();
+}
 
 
 // Scene.cpp — minimal changes: read FBX node markers and feed SprinkleSystem
@@ -45,52 +52,57 @@ void Scene::onSPressed()
 
 void Scene::update(float dt)
 {
-    cupCtrl.update(dt);
-    leverSys.update(dt);
+    powerSys.update(dt);
 
-    if (leverSys.isFullyDown())
-        pourSys.start();
-    else
-        pourSys.requestStop();
+    if (powerSys.isOn()) {
+        cupCtrl.update(dt);
+        leverSys.update(dt);
 
-    pourSys.update(dt);
+        if (leverSys.isFullyDown())
+            pourSys.start();
+        else
+            pourSys.requestStop();
 
-    bool contactNow = pourSys.isContactPast(iceSys.contactT());
-    iceSys.update(dt, pourSys.isActiveOrStopping(), contactNow);
+        pourSys.update(dt);
 
-    glm::mat4 base(1.0f);
-    base = glm::translate(base, glm::vec3(0.0f, -1.0f, 0.0f));
-    base = glm::scale(base, glm::vec3(1.4f));
+        bool contactNow = pourSys.isContactPast(iceSys.contactT());
+        iceSys.update(dt, pourSys.isActiveOrStopping(), contactNow);
 
-    glm::mat4 cupM = cupCtrl.apply(base);
-    glm::mat4 iceM = glm::translate(cupM, iceCreamPosOffset);
+        glm::mat4 base(1.0f);
+        base = glm::translate(base, glm::vec3(0.0f, -1.0f, 0.0f));
+        base = glm::scale(base, glm::vec3(1.4f));
 
-    glm::vec3 nozzleLocal(-1.1f, 0.9f, 0.0f);
-    glm::vec3 entLocal(-1.1f, 0.48f, 0.0f);
+        glm::mat4 cupM = cupCtrl.apply(base);
+        glm::mat4 iceM = glm::translate(cupM, iceCreamPosOffset);
 
-    glm::vec3 startLocal(-1.1f, 0.48f, 0.0f);
-    glm::vec3 endLocal(-0.2f, 0.24f, 0.0f);
+        glm::vec3 nozzleLocal(-1.1f, 0.9f, 0.0f);
+        glm::vec3 entLocal(-1.1f, 0.48f, 0.0f);
 
-    glm::vec3 nozzlePosW = glm::vec3(base * glm::vec4(nozzleLocal, 1));
-    glm::vec3 entW = glm::vec3(base * glm::vec4(entLocal, 1));
-    glm::vec3 startW = glm::vec3(base * glm::vec4(startLocal, 1));
-    glm::vec3 endW = glm::vec3(base * glm::vec4(endLocal, 1));
+        glm::vec3 startLocal(-1.1f, 0.48f, 0.0f);
+        glm::vec3 endLocal(-0.2f, 0.24f, 0.0f);
 
-    glm::vec3 nozzleDirW = glm::normalize(entW - nozzlePosW);
+        glm::vec3 nozzlePosW = glm::vec3(base * glm::vec4(nozzleLocal, 1));
+        glm::vec3 entW = glm::vec3(base * glm::vec4(entLocal, 1));
+        glm::vec3 startW = glm::vec3(base * glm::vec4(startLocal, 1));
+        glm::vec3 endW = glm::vec3(base * glm::vec4(endLocal, 1));
 
-    sprinkleSys.setNozzle(nozzlePosW, nozzleDirW, 0.02f);
-    sprinkleSys.setTunnel(entW, startW, endW);
+        glm::vec3 nozzleDirW = glm::normalize(entW - nozzlePosW);
+
+        sprinkleSys.setNozzle(nozzlePosW, nozzleDirW, 0.02f);
+        sprinkleSys.setTunnel(entW, startW, endW);
 
 
 
-    // Cup/ice collider in world (simple sphere)
-    glm::vec3 iceCenterW = glm::vec3(iceM * glm::vec4(0, 0, 0, 1));
-    glm::vec3 cupCenterW = glm::vec3(cupM * glm::vec4(0, 0, 0, 1));
+        // Cup/ice collider in world (simple sphere)
+        glm::vec3 iceCenterW = glm::vec3(iceM * glm::vec4(0, 0, 0, 1));
+        glm::vec3 cupCenterW = glm::vec3(cupM * glm::vec4(0, 0, 0, 1));
 
-    sprinkleSys.setCupRegion(cupCenterW, 0.1f);
-    sprinkleSys.setIceCollider(iceCenterW, 0.23f);
+        sprinkleSys.setCupRegion(cupCenterW, 0.1f);
+        sprinkleSys.setIceCollider(iceCenterW, 0.23f);
+        sprinkleSys.setCupMatrix(cupM);
 
-    sprinkleSys.update(dt);
+        sprinkleSys.update(dt);
+    }
 }
 
 
@@ -126,10 +138,22 @@ void Scene::render(const RenderContext& ctx)
 
     sh.setMat4("uM", base);
     res.machine.Draw(sh);
-
     res.sprinkles.Draw(sh);
+
+
+
     sprinkleSys.setModels({ &res.sprinkle });
     sprinkleSys.draw(sh);
+
+
+    glm::mat4 powerM = base;
+    powerM = powerSys.applyTo(powerM);
+
+    sh.setMat4("uM", powerM);
+    res.power.Draw(sh);
+
+
+    
 
     // lever
     glm::mat4 leverM = leverSys.apply(base);

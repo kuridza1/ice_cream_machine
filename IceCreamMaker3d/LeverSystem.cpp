@@ -29,7 +29,8 @@ void LeverSystem::resetUp()
 
 void LeverSystem::update(float dt)
 {
-    // Smooth-ish linear approach (kritično damping-ovano nije potrebno ovde)
+    if (!m_enabled) return; 
+
     float targetT = targetDown ? 1.0f : 0.0f;
 
     if (t < targetT)

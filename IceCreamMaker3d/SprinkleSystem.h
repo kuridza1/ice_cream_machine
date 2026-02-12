@@ -24,6 +24,10 @@ struct Sprinkle
     float waitTimer = 0.0f;
     bool waitingToExit = false;
 
+    bool attachedToCup = false;
+    glm::vec3 cupLocalPos{ 0.0f };  // pozicija u koordinatama ?aše
+    glm::vec3 cupLocalRot{ 0.0f };
+
     int modelIndex = 0;         // NEW: which sprinkle model to render
 
     bool active = true;
@@ -58,6 +62,8 @@ public:
     void setMaxCount(int n) { m_maxCount = n; }
     void setFinalGroundY(float y) { m_finalGroundY = y; }
     void setGravity(float g) { m_gravity = g; }
+    void setCupMatrix(const glm::mat4& cupWorld);
+
 
 private:
     void spawn();
@@ -84,6 +90,9 @@ private:
     glm::vec3 m_nozzlePos{ 0.0f };
     glm::vec3 m_nozzleDir{ 0.0f, -1.0f, 0.0f };
     float m_spawnDiscRadius = 0.006f;   // jako mali disk
+
+    glm::mat4 m_cupM{ 1.0f };
+    glm::mat4 m_cupInvM{ 1.0f };
 
     glm::vec3 m_tunnelEntrance{ 0.0f };
     glm::vec3 m_tunnelStart{ 0.0f };

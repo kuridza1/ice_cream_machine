@@ -10,7 +10,7 @@ Resources::Resources()
 	sprinklesContainer("res/SprinklesContainer.obj"),
 	sprinkles("res/Sprinkles.obj"),
 	sprinkle("res/Sprinkle.obj"),
-
+	power("res/Power.obj"),
     shader("basic.vert", "basic.frag")
 {
 }

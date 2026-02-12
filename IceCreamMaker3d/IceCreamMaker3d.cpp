@@ -91,6 +91,8 @@ int main()
 
     while (!glfwWindowShouldClose(window))
     {
+        glfwPollEvents();
+
         float now = (float)glfwGetTime();
         float dt = now - lastTime;
         lastTime = now;
@@ -103,7 +105,8 @@ int main()
         static bool spaceWasDown = false;
         static bool rWasDown = false;
         static bool fWasDown = false;
-
+        static bool pWasDown = false;
+        
         bool spaceDown = glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS;
         if (spaceDown && !spaceWasDown)
             scene.onSpacePressed();
@@ -114,11 +117,16 @@ int main()
             scene.onResetPressed();
         rWasDown = rDown;
 
-        // --- SPRINKLES: HOLD F = emit ON, release = emit OFF ---
         bool fDown = glfwGetKey(window, GLFW_KEY_F) == GLFW_PRESS;
         if (fDown && !fWasDown)
             scene.onSPressed();
-		fWasDown = fDown;
+        fWasDown = fDown;
+
+        bool pDown = glfwGetKey(window, GLFW_KEY_P) == GLFW_PRESS;
+        if (pDown && !pWasDown)
+            scene.onPPressed();
+        pWasDown = pDown;
+
         if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
             cameraPos += cameraSpeed * cameraFront;
         if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)
@@ -155,7 +163,6 @@ int main()
         scene.render(ctx);
 
         glfwSwapBuffers(window);
-        glfwPollEvents();
     }
 
     glfwTerminate();

@@ -24,12 +24,15 @@ public:
 
     // transform za crtanje poluge
     glm::mat4 apply(const glm::mat4& base) const;
+    void setEnabled(bool e) { m_enabled = e; }
+    bool isEnabled() const { return m_enabled; }
 
 private:
     float maxAngle;
     glm::vec3 pivot;
     glm::vec3 axis;
     float animSpeed;
+    bool m_enabled = true;
 
     bool targetDown; // gde poluga "želi" da ode
     float t;         // 0..1 (0=up, 1=down)
