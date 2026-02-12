@@ -1,6 +1,7 @@
 // Scene.cpp
 #include "Scene.h"
 #include <glm/gtc/matrix_transform.hpp>
+#include "TextureUtils.h"
 
 Scene::Scene()
     : res(),
@@ -23,7 +24,12 @@ Scene::Scene()
 }
 
 
-
+void Scene::initGL()
+{
+    res.texVanilla = LoadTexture2D("res/ice_vanilla.png", true);
+    res.texChoco = LoadTexture2D("res/ice_choco.png", true);
+    res.texMix = LoadTexture2D("res/ice_mixed.png", true);
+}
 void Scene::onEnterPressed()
 {
     leverSys.toggle();
@@ -213,7 +219,16 @@ void Scene::render(const RenderContext& ctx)
     // ----------------------------------------------------
     // ICE CREAM (progress mask)
     // ----------------------------------------------------
+    unsigned int iceTex = 0;
+    switch (btnSys.selectedFlavor())
+    {
+    case IceFlavor::One: iceTex = res.texVanilla; break;
+    case IceFlavor::Two: iceTex = res.texChoco;   break;
+    case IceFlavor::Mix: iceTex = res.texMix;     break;
+    }
+    res.iceCream.SetOverrideDiffuse(iceTex);
 
+    // ICE CREAM draw
     sh.setInt("uUseProgressMask", 1);
     sh.setFloat("uProgress", iceSys.progress());
 

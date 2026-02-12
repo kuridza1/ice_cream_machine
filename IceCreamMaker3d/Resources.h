@@ -18,9 +18,13 @@ struct Resources
     Model button2;
     Model buttonMix;
 	Model buttonLed;
+    unsigned int texVanilla = 0;
+    unsigned int texChoco = 0;
+    unsigned int texMix = 0;
+
+
     Shader shader;
 
 
     Resources();
-    void load();
 };

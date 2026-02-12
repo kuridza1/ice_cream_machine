@@ -46,7 +46,10 @@ public:
     bool gammaCorrection;
 
     Model() : gammaCorrection(false) {}
-
+    void SetOverrideDiffuse(unsigned int texId)
+    {
+        for (auto& m : meshes) m.overrideDiffuse = texId;
+    }
     Model(string const& path, bool gamma = false)
         : gammaCorrection(gamma)
     {

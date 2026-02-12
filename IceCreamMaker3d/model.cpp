@@ -1,8 +1,3 @@
-// model.cpp (UPDATED)
-// Your TextureFromFile stays the same.
-// Only remove STB_IMAGE_IMPLEMENTATION duplication if it exists elsewhere.
-// Keep as-is otherwise.
-
 #define STB_IMAGE_IMPLEMENTATION
 #include "stb_image.h"
 

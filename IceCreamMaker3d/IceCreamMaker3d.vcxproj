@@ -141,6 +141,7 @@
     <ClCompile Include="Resources.cpp" />
     <ClCompile Include="Scene.cpp" />
     <ClCompile Include="SprinkleSystem.cpp" />
+    <ClCompile Include="TextureUtils.cpp" />
   </ItemGroup>
   <ItemGroup>
     <None Include="basic.frag" />
@@ -161,6 +162,7 @@
     <ClInclude Include="shader.hpp" />
     <ClInclude Include="SprinkleSystem.h" />
     <ClInclude Include="stb_image.h" />
+    <ClInclude Include="TextureUtils.h" />
     <ClInclude Include="Util.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

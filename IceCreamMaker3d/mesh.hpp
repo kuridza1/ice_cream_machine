@@ -30,6 +30,7 @@ public:
     vector<unsigned int> indices;
     vector<Texture>      textures;
     unsigned int VAO;
+    unsigned int overrideDiffuse = 0; // 0 = nema override
 
     Mesh(vector<Vertex> vertices, vector<unsigned int> indices, vector<Texture> textures)
     {
@@ -44,27 +45,50 @@ public:
     {
         unsigned int diffuseNr = 1;
         unsigned int specularNr = 1;
-        unsigned int normalNr = 1;
+
+        unsigned int unit = 0;
+
+        // 1) Ako postoji override diffuse, binduj ga kao uDiffMap1 na TEXTURE0
+        if (overrideDiffuse != 0)
+        {
+            glActiveTexture(GL_TEXTURE0);
+            glUniform1i(glGetUniformLocation(shader.ID, "uDiffMap1"), 0);
+            glBindTexture(GL_TEXTURE_2D, overrideDiffuse);
+            unit = 1; // slede?e teksture idu od TEXTURE1
+            diffuseNr = 2; // jer smo ve? zauzeli "diffuse1"
+        }
+
+        // 2) Binduj ostale teksture iz MTL-a
         for (unsigned int i = 0; i < textures.size(); i++)
         {
-            glActiveTexture(GL_TEXTURE0 + i); 
+            // presko?i diffuse iz MTL-a ako override postoji
+            if (overrideDiffuse != 0 && textures[i].type == "uDiffMap")
+                continue;
+
+            glActiveTexture(GL_TEXTURE0 + unit);
+
             string number;
             string name = textures[i].type;
+
             if (name == "uDiffMap")
                 number = std::to_string(diffuseNr++);
             else
                 number = std::to_string(specularNr++);
 
-            glUniform1i(glGetUniformLocation(shader.ID, (name + number).c_str()), i);
+            glUniform1i(glGetUniformLocation(shader.ID, (name + number).c_str()), unit);
             glBindTexture(GL_TEXTURE_2D, textures[i].id);
+
+            unit++;
         }
 
         glBindVertexArray(VAO);
-        glDrawElements(GL_TRIANGLES, static_cast<unsigned int>(indices.size()), GL_UNSIGNED_INT, 0);
+        glDrawElements(GL_TRIANGLES, (unsigned int)indices.size(), GL_UNSIGNED_INT, 0);
         glBindVertexArray(0);
 
         glActiveTexture(GL_TEXTURE0);
     }
+
+
 
 private:
     unsigned int VBO, EBO;

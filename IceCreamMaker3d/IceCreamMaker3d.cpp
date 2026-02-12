@@ -86,6 +86,7 @@ int main()
     glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 
     Scene scene;
+	scene.initGL();
 
     float lastTime = (float)glfwGetTime();
 

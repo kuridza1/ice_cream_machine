@@ -26,7 +26,7 @@ public:
     void onSpacePressed();
 
     void update(float dt);
-
+    void initGL();
     void render(const RenderContext& ctx);
 
 private:

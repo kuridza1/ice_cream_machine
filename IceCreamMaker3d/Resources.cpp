@@ -1,5 +1,6 @@
 // Resources.cpp
 #include "Resources.h"
+#include "TextureUtils.h"
 
 Resources::Resources()
     : machine("res/MachineModel.obj"),
@@ -13,10 +14,10 @@ Resources::Resources()
 	power("res/Power.obj"),
 	button1("res/Button1.obj"), button2("res/Button2.obj"), buttonMix("res/ButtonMix.obj"),
     buttonLed("res/ButtonLed.obj"),
-    shader("basic.vert", "basic.frag")
-{
 
-}
+    shader("basic.vert", "basic.frag")
+{}
+
 
 
 
