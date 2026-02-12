@@ -14,7 +14,7 @@ Resources::Resources()
 	power("res/Power.obj"),
 	button1("res/Button1.obj"), button2("res/Button2.obj"), buttonMix("res/ButtonMix.obj"),
     buttonLed("res/ButtonLed.obj"),
-
+	table("res/Table.obj"),
     shader("basic.vert", "basic.frag")
 {}
 

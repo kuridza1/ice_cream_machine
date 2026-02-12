@@ -188,7 +188,7 @@ void Scene::render(const RenderContext& ctx)
     sh.setMat4("uM", base);
     res.machine.Draw(sh);
     res.sprinkles.Draw(sh);
-
+    res.table.Draw(sh);
     sprinkleSys.setModels({ &res.sprinkle });
     sprinkleSys.draw(sh);
 

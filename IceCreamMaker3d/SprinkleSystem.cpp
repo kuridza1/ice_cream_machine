@@ -70,6 +70,13 @@ glm::vec3 SprinklesSystem::tunnelPoint(float t) const
     t = std::max(0.0f, std::min(1.0f, t));
     return (1.0f - t) * m_tunnelStart + t * m_tunnelEnd;
 }
+static inline float sprinkleRadius(const Sprinkle& s)
+{
+
+    constexpr float SPRINKLE_MODEL_RADIUS = 0.5f;
+    return SPRINKLE_MODEL_RADIUS * s.size;
+}
+
 
 void SprinklesSystem::spawn()
 {
@@ -77,6 +84,7 @@ void SprinklesSystem::spawn()
 
     Sprinkle s;
     s.pos = m_nozzlePos;
+
     // random point in disc perpendicular to nozzleDir
     std::uniform_real_distribution<float> a01(0.0f, 1.0f);
     std::uniform_real_distribution<float> aAng(0.0f, 6.2831853f);
@@ -95,37 +103,30 @@ void SprinklesSystem::spawn()
     s.waitingToExit = false;
     s.state = 0;
 
-    // small spread + controlled forward speed
-    std::uniform_real_distribution<float> disSide(-0.02f, 0.02f);
-    std::uniform_real_distribution<float> disSpeed(0.35f, 0.55f); // tune
 
-    float sideA = disSide(m_gen);
-    float sideB = disSide(m_gen);
+    s.size = 0.20f;
+
+    std::uniform_real_distribution<float> disSpeed(0.25f, 0.85f);
     float speed = disSpeed(m_gen);
 
-    s.vel = m_nozzleDir * speed + right * sideA + forward * sideB;
+    std::uniform_real_distribution<float> disSpread(-1.0f, 1.0f);
+    float spreadA = disSpread(m_gen);
+    float spreadB = disSpread(m_gen);
 
-    // Size (increase if your sprinkle mesh is tiny)
-    std::uniform_real_distribution<float> disSize(0.2f, 0.2f);
-    s.size = disSize(m_gen);
+    float spreadStrength = 0.12f * speed;
 
+    glm::vec3 lateral = right * (spreadA * spreadStrength) + forward * (spreadB * spreadStrength);
+    s.vel = m_nozzleDir * speed + lateral;
+
+
+    std::uniform_real_distribution<float> disSlideMul(0.65f, 1.35f);
+    s.slideSpeedMul = disSlideMul(m_gen);
+
+    // Rotation
     std::uniform_real_distribution<float> disRotSpeed(-2.0f, 2.0f);
     s.rot = glm::vec3(0.0f);
     s.rotSpeed = glm::vec3(disRotSpeed(m_gen), disRotSpeed(m_gen), disRotSpeed(m_gen));
 
-    std::uniform_int_distribution<int> disFlavor(0, 6);
-    int flavor = disFlavor(m_gen);
-    switch (flavor) {
-    case 0: s.color = glm::vec3(0.09f, 0.09f, 0.639f); break;
-    case 1: s.color = glm::vec3(1.0f, 0.0f, 0.0f); break;
-    case 2: s.color = glm::vec3(0.0f, 0.73f, 0.0f); break;
-    case 3: s.color = glm::vec3(1.0f, 0.9f, 0.0f); break;
-    case 4: s.color = glm::vec3(1.0f, 0.75f, 0.80f); break;
-    case 5: s.color = glm::vec3(0.30f, 0.192f, 0.078f); break;
-    case 6: s.color = glm::vec3(1.0f, 0.94f, 0.86f); break;
-    }
-
-    // NEW: pick a model variant
     if (!m_models.empty()) {
         std::uniform_int_distribution<int> disModel(0, (int)m_models.size() - 1);
         s.modelIndex = disModel(m_gen);
@@ -140,6 +141,8 @@ void SprinklesSystem::spawn()
     if ((int)m_sprinkles.size() > m_maxCount)
         m_sprinkles.erase(m_sprinkles.begin());
 }
+
+
 
 void SprinklesSystem::update(double dt)
 {
@@ -173,15 +176,14 @@ void SprinklesSystem::update(double dt)
         {
         case 0: // nozzle -> tunnel entrance 
         { 
-            // “Hit entrance” check () 
-            // // Use a small sphere around entrance: if passed from above and close enough in XZ. 
+
             float r = 0.1f; 
             glm::vec2 prevXZ(prevPos.x, prevPos.z); 
             glm::vec2 currXZ(d.pos.x, d.pos.z); 
             glm::vec2 entXZ(m_tunnelEntrance.x, m_tunnelEntrance.z);
             bool closeXZ = glm::length(currXZ - entXZ) <= r; 
             float targetY = 0.25f;
-            float eps = 0.005f;   // tolerancija
+            float eps = 0.005f; 
 
             bool atExactY = std::abs(d.pos.y - targetY) <= eps;
 
@@ -236,7 +238,7 @@ void SprinklesSystem::update(double dt)
                     float totalLen = glm::length(m_tunnelEnd - m_tunnelStart);
                     if (totalLen < 1e-6f) { d.state = 2; break; }
 
-                    float dist = m_slideSpeed * d.slideTimer;
+                    float dist = (m_slideSpeed * d.slideSpeedMul) * d.slideTimer;
                     float t = dist / totalLen;
 
                     glm::vec3 p = tunnelPoint(t);
@@ -263,50 +265,65 @@ void SprinklesSystem::update(double dt)
         }
         break;
 
-        case 2: // exit -> ice
+        case 2: // exit -> free fall (missed cup) OR hit ice (over cup)
         {
+            bool overCup =
+                glm::length(glm::vec2(d.pos.x - m_cupCenter.x, d.pos.z - m_cupCenter.z)) <= m_cupRadius;
+
+            // 1) Ako nije iznad ?aše: samo slobodan pad do poda (nema ice kolizije)
+            if (!overCup)
+            {
+                if (d.pos.y - d.size <= m_finalGroundY)
+                {
+                    d.pos.y = m_finalGroundY + d.size;
+                    d.vel = glm::vec3(0.0f);        // zaustavi skroz (da ne klizi po "ni?emu")
+                    d.rotSpeed *= 0.3f;             // opciono
+                    d.state = 3;
+                    d.attachedToCup = false;
+                }
+                break;
+            }
+
+            // 2) Iznad ?aše: može da pogodi sladoled
             glm::vec3 to = d.pos - m_iceCenter;
             float dist = glm::length(to);
             float target = m_iceRadius + d.size;
 
-            bool overCup = glm::length(glm::vec2(d.pos.x - m_cupCenter.x, d.pos.z - m_cupCenter.z)) <= m_cupRadius;
-
-            if (overCup && dist <= target)
+            if (dist <= target)
             {
                 glm::vec3 n = (dist > 1e-6f) ? (to / dist) : glm::vec3(0, 1, 0);
 
                 float rf = rand01(m_gen);
                 float depthFactor = rf * rf;
                 float sink = depthFactor * 0.4f * (d.size);
+
                 d.pos = m_iceCenter + n * (target - sink);
 
                 d.vel = glm::vec3(d.vel.x * 0.4f, 0.0f, d.vel.z * 0.4f);
                 d.rotSpeed *= 0.5f;
+
                 d.state = 3;
-                // posle što postaviš d.pos u world-u:
+
                 glm::vec4 lp = m_cupInvM * glm::vec4(d.pos, 1.0f);
                 d.cupLocalPos = glm::vec3(lp);
                 d.attachedToCup = true;
-
-                // opciono: zapamti lokalnu rotaciju (da ne “menja” kad ?aša rotira)
                 d.cupLocalRot = d.rot;
-
             }
             else
             {
+                // nije pogodio sladoled, ali je iznad ?aše: nek padne na pod (slobodan pad)
                 if (d.pos.y - d.size <= m_finalGroundY)
                 {
                     d.pos.y = m_finalGroundY + d.size;
-                    d.vel.y = 0.0f;
-                    d.vel.x *= 0.4f;
-                    d.vel.z *= 0.4f;
+                    d.vel = glm::vec3(0.0f);
+                    d.rotSpeed *= 0.3f;
                     d.state = 3;
                     d.attachedToCup = false;
-
                 }
             }
         }
         break;
+
 
         case 3: // settled
         {
@@ -368,9 +385,9 @@ void SprinklesSystem::draw(Shader& sh)
         M = glm::rotate(M, drawRot.y, glm::vec3(0, 1, 0));
         M = glm::rotate(M, drawRot.x, glm::vec3(1, 0, 0));
         M = glm::rotate(M, drawRot.z, glm::vec3(0, 0, 1));
-        M = glm::scale(M, glm::vec3(s.size)); // ovo je tvoj scale za sprinkle
+        M = glm::scale(M, glm::vec3(s.size)); 
 
-        sh.setMat4("uM", M); // <-- OBAVEZNO
+        sh.setMat4("uM", M);
 
         int idx = s.modelIndex;
         if (idx < 0) idx = 0;

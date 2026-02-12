@@ -18,6 +18,7 @@ struct Resources
     Model button2;
     Model buttonMix;
 	Model buttonLed;
+    Model table;
     unsigned int texVanilla = 0;
     unsigned int texChoco = 0;
     unsigned int texMix = 0;
