@@ -14,9 +14,13 @@ uniform mat4 uP;
 void main()
 {
     chUV = inUV;
-    chFragPos = vec3(uM * vec4(inPos, 1.0));
-    chNormal = mat3(transpose(inverse(uM))) * inNormal;  
-    
-    gl_Position = uP * uV * vec4(chFragPos, 1.0);
-}
 
+    vec4 worldPos = uM * vec4(inPos, 1.0);
+    chFragPos = worldPos.xyz;
+
+    // normal matrix (handles scaling correctly)
+    mat3 normalMat = transpose(inverse(mat3(uM)));
+    chNormal = normalize(normalMat * inNormal);
+
+    gl_Position = uP * uV * worldPos;
+}

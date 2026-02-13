@@ -66,6 +66,12 @@
     <None Include="basic.vert">
       <Filter>Source Files</Filter>
     </None>
+    <None Include="ui.vert">
+      <Filter>Source Files</Filter>
+    </None>
+    <None Include="ui.frag">
+      <Filter>Source Files</Filter>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="shader.hpp">

@@ -29,6 +29,14 @@ void Scene::initGL()
     res.texVanilla = LoadTexture2D("res/ice_vanilla.png", true);
     res.texChoco = LoadTexture2D("res/ice_choco.png", true);
     res.texMix = LoadTexture2D("res/ice_mixed.png", true);
+    res.hudTex = LoadTexture2D("res/name-tag.png", false);
+
+    if (!res.hudShader)
+        res.hudShader = new Shader("ui.vert", "ui.frag");
+
+    if (res.hudVAO == 0)
+        res.CreateHudQuad(res.hudVAO, res.hudVBO);
+
 }
 void Scene::onEnterPressed()
 {
@@ -113,140 +121,7 @@ void Scene::update(float dt)
     }
 }
 
-static void DebugDrawLines(const glm::mat4& VP, const std::vector<glm::vec3>& pts)
-{
-    // pts = lista verteksa u parovima (linije): [a0,b0,a1,b1,...]
-    static GLuint vao = 0, vbo = 0;
-    if (vao == 0)
-    {
-        glGenVertexArrays(1, &vao);
-        glGenBuffers(1, &vbo);
-        glBindVertexArray(vao);
-        glBindBuffer(GL_ARRAY_BUFFER, vbo);
-        glBufferData(GL_ARRAY_BUFFER, 0, nullptr, GL_DYNAMIC_DRAW);
-        glEnableVertexAttribArray(0);
-        glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(glm::vec3), (void*)0);
-        glBindVertexArray(0);
-    }
 
-    glBindVertexArray(vao);
-    glBindBuffer(GL_ARRAY_BUFFER, vbo);
-    glBufferData(GL_ARRAY_BUFFER, pts.size() * sizeof(glm::vec3), pts.data(), GL_DYNAMIC_DRAW);
-
-    // koristi tvoj postoje?i shader: crtaj kao emission-only crveno
-    // o?ekuje: uUseEmission, uEmissionColor, uEmissionStrength, uM, uV, uP
-    // M=I jer su pts ve? u world space
-    glDrawArrays(GL_LINES, 0, (GLsizei)pts.size());
-
-    glBindVertexArray(0);
-}
-
-
-
-static void BuildCenterCross(std::vector<glm::vec3>& out, const glm::vec3& c, float s = 0.05f)
-{
-    out.push_back(c + glm::vec3(-s, 0, 0)); out.push_back(c + glm::vec3(s, 0, 0));
-    out.push_back(c + glm::vec3(0, -s, 0)); out.push_back(c + glm::vec3(0, s, 0));
-    out.push_back(c + glm::vec3(0, 0, -s)); out.push_back(c + glm::vec3(0, 0, s));
-}
-static void DrawDebugLines(Shader& sh,
-    const std::vector<glm::vec3>& pts,
-    const glm::vec3& color)
-{
-    static GLuint vao = 0, vbo = 0;
-
-    if (vao == 0)
-    {
-        glGenVertexArrays(1, &vao);
-        glGenBuffers(1, &vbo);
-
-        glBindVertexArray(vao);
-        glBindBuffer(GL_ARRAY_BUFFER, vbo);
-        glEnableVertexAttribArray(0);
-        glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(glm::vec3), (void*)0);
-        glBindVertexArray(0);
-    }
-
-    glBindVertexArray(vao);
-    glBindBuffer(GL_ARRAY_BUFFER, vbo);
-    glBufferData(GL_ARRAY_BUFFER,
-        pts.size() * sizeof(glm::vec3),
-        pts.data(),
-        GL_DYNAMIC_DRAW);
-
-    sh.setInt("uUseEmission", 1);
-    sh.setVec3("uEmissionColor", color.x, color.y, color.z);
-    sh.setFloat("uEmissionStrength", 5.0f);
-    sh.setMat4("uM", glm::mat4(1.0f));
-
-    glDrawArrays(GL_LINES, 0, (GLsizei)pts.size());
-
-    sh.setInt("uUseEmission", 0);
-    sh.setFloat("uEmissionStrength", 0.0f);
-
-    glBindVertexArray(0);
-}
-
-static void BuildCircleXZ(std::vector<glm::vec3>& out,
-    const glm::vec3& c,
-    float r,
-    int segs = 64)
-{
-    for (int i = 0; i < segs; i++)
-    {
-        float a0 = i * 6.2831853f / segs;
-        float a1 = (i + 1) * 6.2831853f / segs;
-
-        glm::vec3 p0 = c + glm::vec3(cos(a0) * r, 0, sin(a0) * r);
-        glm::vec3 p1 = c + glm::vec3(cos(a1) * r, 0, sin(a1) * r);
-
-        out.push_back(p0);
-        out.push_back(p1);
-    }
-}
-
-
-
-static void BuildCross(std::vector<glm::vec3>& out,
-    const glm::vec3& c,
-    float s = 0.05f)
-{
-    out.push_back(c + glm::vec3(-s, 0, 0));
-    out.push_back(c + glm::vec3(s, 0, 0));
-
-    out.push_back(c + glm::vec3(0, -s, 0));
-    out.push_back(c + glm::vec3(0, s, 0));
-
-    out.push_back(c + glm::vec3(0, 0, -s));
-    out.push_back(c + glm::vec3(0, 0, s));
-}
-
-// “sfera” kao 3 kruga (XY, XZ, YZ)
-static void BuildSphere3Circles(std::vector<glm::vec3>& out, const glm::vec3& c, float r, int segs = 64)
-{
-    // XZ
-    BuildCircleXZ(out, c, r, segs);
-
-    // XY
-    for (int i = 0; i < segs; i++)
-    {
-        float a0 = (float)i * 6.2831853f / (float)segs;
-        float a1 = (float)(i + 1) * 6.2831853f / (float)segs;
-        glm::vec3 p0 = c + glm::vec3(std::cos(a0) * r, std::sin(a0) * r, 0.0f);
-        glm::vec3 p1 = c + glm::vec3(std::cos(a1) * r, std::sin(a1) * r, 0.0f);
-        out.push_back(p0); out.push_back(p1);
-    }
-
-    // YZ
-    for (int i = 0; i < segs; i++)
-    {
-        float a0 = (float)i * 6.2831853f / (float)segs;
-        float a1 = (float)(i + 1) * 6.2831853f / (float)segs;
-        glm::vec3 p0 = c + glm::vec3(0.0f, std::cos(a0) * r, std::sin(a0) * r);
-        glm::vec3 p1 = c + glm::vec3(0.0f, std::cos(a1) * r, std::sin(a1) * r);
-        out.push_back(p0); out.push_back(p1);
-    }
-}
 
 
 void Scene::render(const RenderContext& ctx)
@@ -257,9 +132,6 @@ void Scene::render(const RenderContext& ctx)
     auto& sh = res.shader;
     sh.use();
 
-    // ----------------------------------------------------
-    // GLOBAL UNIFORMS
-    // ----------------------------------------------------
 
     sh.setMat4("uP", ctx.P);
     sh.setMat4("uV", ctx.V);
@@ -274,12 +146,9 @@ void Scene::render(const RenderContext& ctx)
 
     
 
-    // vrati emission nazad (da ti ne oboji ostalo)
     sh.setInt("uUseEmission", 0);
     sh.setFloat("uEmissionStrength", 0.0f);
-    // ----------------------------------------------------
-    // BUTTON POINT LIGHT (affects whole scene)
-    // ----------------------------------------------------
+
 
     if (powerSys.isOn())
     {
@@ -287,7 +156,6 @@ void Scene::render(const RenderContext& ctx)
         sh.setVec3("uBtnLightColor", 1.0f, 0.85f, 0.7f);
         sh.setFloat("uBtnLightIntensity", 2.5f);
 
-        // world position of LED (adjust numbers if needed)
         glm::mat4 base(1.0f);
         base = glm::translate(base, glm::vec3(0.0f, -1.0f, 0.0f));
         base = glm::scale(base, glm::vec3(1.4f));
@@ -305,9 +173,7 @@ void Scene::render(const RenderContext& ctx)
         sh.setInt("uUseBtnLight", 0);
     }
 
-    // ----------------------------------------------------
-    // BASE MATRIX
-    // ----------------------------------------------------
+
 
     glm::mat4 base(1.0f);
     base = glm::translate(base, glm::vec3(0.0f, -1.0f, 0.0f));
@@ -316,9 +182,7 @@ void Scene::render(const RenderContext& ctx)
     glDisable(GL_BLEND);
     glDepthMask(GL_TRUE);
 
-    // ----------------------------------------------------
-    // MACHINE
-    // ----------------------------------------------------
+
 
     sh.setMat4("uM", base);
     res.machine.Draw(sh);
@@ -327,33 +191,25 @@ void Scene::render(const RenderContext& ctx)
     sprinkleSys.setModels({ &res.sprinkle });
     sprinkleSys.draw(sh);
 
-    // ----------------------------------------------------
-    // POWER BUTTON (rotating switch)
-    // ----------------------------------------------------
+
 
     glm::mat4 powerM = powerSys.applyTo(base);
     sh.setMat4("uM", powerM);
     res.power.Draw(sh);
 
-    // ----------------------------------------------------
-    // LEVER
-    // ----------------------------------------------------
+
 
     glm::mat4 leverM = leverSys.apply(base);
     sh.setMat4("uM", leverM);
     res.lever.Draw(sh);
 
-    // ----------------------------------------------------
-    // CUP
-    // ----------------------------------------------------
+
 
     glm::mat4 cupM = cupCtrl.apply(base);
     sh.setMat4("uM", cupM);
     res.cup.Draw(sh);
 
-    // ----------------------------------------------------
-    // ICE CREAM (progress mask)
-    // ----------------------------------------------------
+
     unsigned int iceTex = 0;
     switch (btnSys.selectedFlavor())
     {
@@ -363,7 +219,6 @@ void Scene::render(const RenderContext& ctx)
     }
     res.iceCream.SetOverrideDiffuse(iceTex);
 
-    // ICE CREAM draw
     sh.setInt("uUseProgressMask", 1);
     sh.setFloat("uProgress", iceSys.progress());
 
@@ -371,13 +226,10 @@ void Scene::render(const RenderContext& ctx)
     sh.setMat4("uM", iceM);
     res.iceCream.Draw(sh);
 
-    // reset mask
     sh.setInt("uUseProgressMask", 0);
     sh.setFloat("uProgress", 1.0f);
 
-    // ----------------------------------------------------
-    // BUTTONS (normal body)
-    // ----------------------------------------------------
+
 
     sh.setInt("uUseEmission", 0);
     sh.setFloat("uEmissionStrength", 0.0f);
@@ -391,9 +243,6 @@ void Scene::render(const RenderContext& ctx)
     sh.setMat4("uM", btnSys.applyTo(base, ButtonId::Mix));
     res.buttonMix.Draw(sh);
 
-    // ----------------------------------------------------
-    // LED PART (EMISSION ONLY)
-    // ----------------------------------------------------
 
     if (powerSys.isOn())
     {
@@ -414,26 +263,41 @@ void Scene::render(const RenderContext& ctx)
     sh.setInt("uUseEmission", 0);
     sh.setFloat("uEmissionStrength", 0.0f);
 
-    // ----------------------------------------------------
-    // POUR
-    // ----------------------------------------------------
 
+    res.pour.SetOverrideDiffuse(iceTex);
     pourSys.draw(base, sh, res.pour);
-
-    // ----------------------------------------------------
-    // GLASS (transparent last)
-    // ----------------------------------------------------
 
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
     glDepthMask(GL_FALSE);
-
     sh.setMat4("uM", base);
     res.sprinklesContainer.Draw(sh);
-   
+    glDepthMask(GL_TRUE);              // <<< OBAVEZNO
 
-    glDepthMask(GL_TRUE);
+    // HUD
+    glDisable(GL_DEPTH_TEST);
+    glDisable(GL_CULL_FACE);
+
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
+    res.hudShader->use();
+    res.hudShader->setInt("uTex", 0);
+    res.hudShader->setFloat("uAlpha", 0.9f);
+
+    glActiveTexture(GL_TEXTURE0);
+    glBindTexture(GL_TEXTURE_2D, res.hudTex);
+
+    glBindVertexArray(res.hudVAO);
+    glDrawArrays(GL_TRIANGLES, 0, 6);
+    glBindVertexArray(0);
+
+    glBindTexture(GL_TEXTURE_2D, 0);
     glDisable(GL_BLEND);
+
+    glEnable(GL_DEPTH_TEST);
+    glEnable(GL_CULL_FACE);
+
 }
 

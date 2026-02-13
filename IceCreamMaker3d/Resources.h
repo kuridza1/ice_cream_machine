@@ -26,6 +26,10 @@ struct Resources
 
     Shader shader;
 
-
+    unsigned int hudTex = 0;
+    Shader* hudShader = nullptr;   
+    unsigned int hudVAO = 0;
+    unsigned int hudVBO = 0;
+    void CreateHudQuad(GLuint& vao, GLuint& vbo);
     Resources();
 };
