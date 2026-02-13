@@ -18,7 +18,6 @@ void main()
     vec4 worldPos = uM * vec4(inPos, 1.0);
     chFragPos = worldPos.xyz;
 
-    // normal matrix (handles scaling correctly)
     mat3 normalMat = transpose(inverse(mat3(uM)));
     chNormal = normalize(normalMat * inNormal);
 

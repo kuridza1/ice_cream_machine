@@ -9,19 +9,16 @@ uniform vec3 uLightPos;
 uniform vec3 uViewPos;
 uniform vec3 uLightColor;
 
-// progress mask (ice cream growth)
-uniform int uUseProgressMask;   // 0/1
-uniform float uProgress;        // 0..1
+uniform int uUseProgressMask;   
+uniform float uProgress;       
 
-// textures
-uniform sampler2D uDiffMap1;    // flavor 1
-uniform sampler2D uDiffMap2;    // flavor 2
-uniform sampler2D uDiffMapMix;  // mix
-uniform int uFlavor;            // 0=1, 1=2, 2=mix
+uniform sampler2D uDiffMap1;    
+uniform sampler2D uDiffMap2;    
+uniform sampler2D uDiffMapMix;  
+uniform int uFlavor;           
 
-// emission (LED / glowing button part)
-uniform int uUseEmission;       // 0/1
-uniform vec3 uEmissionColor;    // npr. (0,1,0)
+uniform int uUseEmission;       
+uniform vec3 uEmissionColor;   
 uniform float uEmissionStrength;
 
 uniform int uUseBtnLight;
@@ -39,34 +36,36 @@ void main()
             discard;
     }
 
-    // pick texture by flavor
     vec4 tex;
     if (uFlavor == 1)      tex = texture(uDiffMap2, chUV);
     else if (uFlavor == 2) tex = texture(uDiffMapMix, chUV);
     else                   tex = texture(uDiffMap1, chUV);
 
-    float ambientStrength = 0.1;
+    float ambientStrength = 0.08;
     vec3 ambient = ambientStrength * uLightColor;
 
     vec3 norm = normalize(chNormal);
-    vec3 lightDir = normalize(uLightPos - chFragPos);
-    float diff = max(dot(norm, lightDir), 0.0);
-    vec3 diffuse = diff * uLightColor;
+    vec3 L = uLightPos - chFragPos;
+    float dist = length(L);
+    vec3 lightDir = normalize(L);
 
-    float specularStrength = 0.5;
+    float att = 1.0 / (1.0 + 0.5 * dist + 2.0 * dist * dist);
+
+    float diff = max(dot(norm, lightDir), 0.0);
+    vec3 diffuse = diff * uLightColor * att;
+
+    float specularStrength = 0.3;
     vec3 viewDir = normalize(uViewPos - chFragPos);
     vec3 reflectDir = reflect(-lightDir, norm);
-    float spec = pow(max(dot(viewDir, reflectDir), 0.0), 32.0);
-    vec3 specular = specularStrength * spec * uLightColor;
+    float spec = pow(max(dot(viewDir, reflectDir), 0.0), 64.0);
+    vec3 specular = 0.7 * spec * uLightColor * att;
     vec3 lit = (ambient + diffuse + specular) * tex.rgb;
 
-    // --- BUTTON POINT LIGHT ---
     if (uUseBtnLight == 1)
     {
         vec3 L = normalize(uBtnLightPos - chFragPos);
         float dist = length(uBtnLightPos - chFragPos);
 
-        // attenuation
         float att = 1.0 / (1.0 + 2.0 * dist + 6.0 * dist * dist);
 
         float diff2 = max(dot(norm, L), 0.0);
@@ -79,7 +78,6 @@ void main()
         lit += (diffuse2 + specular2) * tex.rgb;
     }
 
-    // emission (self glow)
     if (uUseEmission == 1)
         lit += uEmissionColor * uEmissionStrength;
 

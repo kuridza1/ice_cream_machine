@@ -1,4 +1,4 @@
-﻿// main.cpp (fullscreen + 75 FPS limiter; everything else unchanged)
+﻿// main.cpp (fullscreen + 75 FPS limiter + depth/cull toggles; rest unchanged)
 
 #define _CRT_SECURE_NO_WARNINGS
 #define STB_IMAGE_IMPLEMENTATION
@@ -71,7 +71,7 @@ void mouse_callback(GLFWwindow* window, double xpos, double ypos)
     yaw += xoffset;
     pitch += yoffset;
 
-    if (pitch > 89.0f) pitch = 89.0f;
+    if (pitch > 89.0f)  pitch = 89.0f;
     if (pitch < -89.0f) pitch = -89.0f;
 
     glm::vec3 direction;
@@ -83,6 +83,7 @@ void mouse_callback(GLFWwindow* window, double xpos, double ypos)
 
 void scroll_callback(GLFWwindow* window, double xoffset, double yoffset)
 {
+    (void)xoffset;
     fov -= (float)yoffset;
     if (fov < 20.0f) fov = 20.0f;
     if (fov > 80.0f) fov = 80.0f;
@@ -96,9 +97,7 @@ int main()
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
     glfwWindowHint(GLFW_OPENGL_CORE_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
-    // -----------------------------
-    // FULLSCREEN (primary monitor)
-    // -----------------------------
+
     GLFWmonitor* monitor = glfwGetPrimaryMonitor();
     const GLFWvidmode* mode = glfwGetVideoMode(monitor);
     if (mode)
@@ -114,21 +113,28 @@ int main()
 
     if (glewInit() != GLEW_OK) { glfwTerminate(); return -1; }
 
-    // viewport + resize callback
     glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
     glViewport(0, 0, gWidth, gHeight);
 
+
+    bool depthEnabled = true;
+    bool cullEnabled = true;
+
     glEnable(GL_DEPTH_TEST);
+
+    glEnable(GL_CULL_FACE);
+    glCullFace(GL_BACK);
+    glFrontFace(GL_CCW);
 
     glfwSetCursorPosCallback(window, mouse_callback);
     glfwSetScrollCallback(window, scroll_callback);
     glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 
-    // IMPORTANT: initGL after GL context exists
     Scene scene;
     scene.initGL();
 
     float lastTime = (float)glfwGetTime();
+
 
     while (!glfwWindowShouldClose(window))
     {
@@ -141,10 +147,31 @@ int main()
         lastTime = now;
 
         float cameraSpeed = 4.0f * dt;
+
         if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
             glfwSetWindowShouldClose(window, true);
 
-        // --- EDGE KEYS (kao pre) ---
+
+        static bool f1WasDown = false;
+        static bool f2WasDown = false;
+        bool f1Down = glfwGetKey(window, GLFW_KEY_9) == GLFW_PRESS;
+        if (f1Down && !f1WasDown)
+        {
+            depthEnabled = !depthEnabled;
+            if (depthEnabled) glEnable(GL_DEPTH_TEST);
+            else              glDisable(GL_DEPTH_TEST);
+        }
+        f1WasDown = f1Down;
+
+        bool f2Down = glfwGetKey(window, GLFW_KEY_0) == GLFW_PRESS;
+        if (f2Down && !f2WasDown)
+        {
+            cullEnabled = !cullEnabled;
+            if (cullEnabled) glEnable(GL_CULL_FACE);
+            else             glDisable(GL_CULL_FACE);
+        }
+        f2WasDown = f2Down;
+
         static bool oneWasDown = false;
         static bool twoWasDown = false;
         static bool spaceWasDown = false;
@@ -181,6 +208,7 @@ int main()
         if (pDown && !pWasDown) scene.onPPressed();
         pWasDown = pDown;
 
+        // camera move
         if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
             cameraPos += cameraSpeed * cameraFront;
         if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)
@@ -206,17 +234,14 @@ int main()
 
         ctx.V = glm::lookAt(cameraPos, cameraPos + cameraFront, cameraUp);
 
-        ctx.lightPos = glm::vec3(-2.0f, 4.0f, 3.0f);
+        ctx.lightPos = glm::vec3(-1.0f, 1.8f, 1.5f);
         ctx.viewPos = cameraPos;
-        ctx.lightColor = glm::vec3(1.0f);
+        ctx.lightColor = glm::vec3(2.5f, 2.3f, 2.2f);
 
         scene.render(ctx);
 
         glfwSwapBuffers(window);
 
-        // -----------------------------
-        // 75 FPS LIMITER
-        // -----------------------------
         limit_fps(frameStart);
     }
 

@@ -154,14 +154,14 @@ void Scene::render(const RenderContext& ctx)
     {
         sh.setInt("uUseBtnLight", 1);
         sh.setVec3("uBtnLightColor", 1.0f, 0.85f, 0.7f);
-        sh.setFloat("uBtnLightIntensity", 2.5f);
+        sh.setFloat("uBtnLightIntensity", 10.0f);
 
         glm::mat4 base(1.0f);
         base = glm::translate(base, glm::vec3(0.0f, -1.0f, 0.0f));
         base = glm::scale(base, glm::vec3(1.4f));
 
         glm::vec3 btnLightPos =
-            glm::vec3(base * glm::vec4(-0.2f, 1.0f, -0.2f, 1.0f));
+            glm::vec3(base * glm::vec4(-0.2f, 1.0f, 0.0f, 1.0f));
 
         sh.setVec3("uBtnLightPos",
             btnLightPos.x,
@@ -273,7 +273,7 @@ void Scene::render(const RenderContext& ctx)
     glDepthMask(GL_FALSE);
     sh.setMat4("uM", base);
     res.sprinklesContainer.Draw(sh);
-    glDepthMask(GL_TRUE);              // <<< OBAVEZNO
+    glDepthMask(GL_TRUE);            
 
     // HUD
     glDisable(GL_DEPTH_TEST);
