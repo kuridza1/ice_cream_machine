@@ -175,38 +175,38 @@ void SprinklesSystem::update(double dt)
         switch (d.state)
         {
         case 0: // nozzle -> tunnel entrance 
-        { 
+        {
 
-            float r = 0.1f; 
-            glm::vec2 prevXZ(prevPos.x, prevPos.z); 
-            glm::vec2 currXZ(d.pos.x, d.pos.z); 
+            float r = 0.1f;
+            glm::vec2 prevXZ(prevPos.x, prevPos.z);
+            glm::vec2 currXZ(d.pos.x, d.pos.z);
             glm::vec2 entXZ(m_tunnelEntrance.x, m_tunnelEntrance.z);
-            bool closeXZ = glm::length(currXZ - entXZ) <= r; 
+            bool closeXZ = glm::length(currXZ - entXZ) <= r;
             float targetY = 0.25f;
-            float eps = 0.005f; 
+            float eps = 0.005f;
 
             bool atExactY = std::abs(d.pos.y - targetY) <= eps;
 
             if (closeXZ && atExactY)
             {
-                d.pos = m_tunnelEntrance; 
-                d.pos.y = m_tunnelEntrance.y + d.size; 
-                d.vel = glm::vec3(0.0f); 
-                d.state = 1; 
-                d.slideTimer = 0.0f; 
+                d.pos = m_tunnelEntrance;
+                d.pos.y = m_tunnelEntrance.y + d.size;
+                d.vel = glm::vec3(0.0f);
+                d.state = 1;
+                d.slideTimer = 0.0f;
                 if (!m_exitOccupied)
-                    d.waitingToExit = false; 
-                else 
-                { 
-                    d.waitingToExit = true; 
-                    d.waitTimer = 0.0f; 
-                } 
-            } 
-            else if (d.pos.y < 0.25f) 
-            { 
+                    d.waitingToExit = false;
+                else
+                {
+                    d.waitingToExit = true;
+                    d.waitTimer = 0.0f;
+                }
+            }
+            else if (d.pos.y < 0.25f)
+            {
                 d.active = false;
-            } 
-        } 
+            }
+        }
         break;
 
         case 1: // tunnel slide
@@ -265,29 +265,43 @@ void SprinklesSystem::update(double dt)
         }
         break;
 
-        case 2: // exit -> free fall (missed cup) OR hit ice (over cup)
+        case 2: // exit -> free fall OR hit ice
         {
-            bool overCup =
-                glm::length(glm::vec2(d.pos.x - m_cupCenter.x, d.pos.z - m_cupCenter.z)) <= m_cupRadius;
+            // -------------------------
+            // TUNING (vešta?ki bias)
+            // -------------------------
+            const float overCupExtra = 0.12f;  // proširi XZ “iznad ?aše”
+            const float iceHitExtra = 0.20f;  // proširi “sferu” sladoleda
+            const float iceYOffset = 0.150f;  // pomeri centar sladoleda naviše (ako ti treba)
+            const float iceXOffset = 0.25f;  // pomeri centar sladoleda u X (ako ti treba)
 
-            // 1) Ako nije iznad ?aše: samo slobodan pad do poda (nema ice kolizije)
+            // lokalni centar za koliziju (NE diraj m_iceCenter trajno)
+            glm::vec3 iceC = m_iceCenter + glm::vec3(iceXOffset, iceYOffset, 0.0f);
+
+            // overCup test (XZ)
+            float cupR = m_cupRadius + overCupExtra;
+            bool overCup =
+                glm::length(glm::vec2(d.pos.x - iceC.x, d.pos.z - iceC.z)) <= cupR;
+
+            // 1) nije iznad: pad na pod
             if (!overCup)
             {
-                if (d.pos.y - d.size <= m_finalGroundY)
+                if (d.pos.y <= m_finalGroundY)
                 {
-                    d.pos.y = m_finalGroundY + d.size;
-                    d.vel = glm::vec3(0.0f);        // zaustavi skroz (da ne klizi po "ni?emu")
-                    d.rotSpeed *= 0.3f;             // opciono
+                    d.pos.y = m_finalGroundY;
+                    d.vel = glm::vec3(0.0f);
+                    d.rotSpeed *= 0.3f;
                     d.state = 3;
                     d.attachedToCup = false;
                 }
                 break;
             }
 
-            // 2) Iznad ?aše: može da pogodi sladoled
-            glm::vec3 to = d.pos - m_iceCenter;
+            // 2) iznad: proveri sladoled (proširen radius)
+            glm::vec3 to = d.pos - iceC;
             float dist = glm::length(to);
-            float target = m_iceRadius + d.size;
+
+            float target = m_iceRadius + iceHitExtra; // <-- OVO je glavni “bias”
 
             if (dist <= target)
             {
@@ -295,9 +309,9 @@ void SprinklesSystem::update(double dt)
 
                 float rf = rand01(m_gen);
                 float depthFactor = rf * rf;
-                float sink = depthFactor * 0.4f * (d.size);
+                float sink = depthFactor * 0.4f * d.size;
 
-                d.pos = m_iceCenter + n * (target - sink);
+                d.pos = iceC + n * (target - sink);
 
                 d.vel = glm::vec3(d.vel.x * 0.4f, 0.0f, d.vel.z * 0.4f);
                 d.rotSpeed *= 0.5f;
@@ -311,10 +325,10 @@ void SprinklesSystem::update(double dt)
             }
             else
             {
-                // nije pogodio sladoled, ali je iznad ?aše: nek padne na pod (slobodan pad)
-                if (d.pos.y - d.size <= m_finalGroundY)
+                // iznad ?aše ali promašio sladoled: pad na pod
+                if (d.pos.y <= m_finalGroundY)
                 {
-                    d.pos.y = m_finalGroundY + d.size;
+                    d.pos.y = m_finalGroundY;
                     d.vel = glm::vec3(0.0f);
                     d.rotSpeed *= 0.3f;
                     d.state = 3;
@@ -362,30 +376,62 @@ void SprinklesSystem::update(double dt)
         m_sprinkles.end()
     );
 }
+static glm::mat3 extractRotationNoScale(const glm::mat4& M)
+{
+    glm::vec3 x = glm::vec3(M[0]);
+    glm::vec3 y = glm::vec3(M[1]);
+    glm::vec3 z = glm::vec3(M[2]);
 
+    x = glm::normalize(x);
+    y = glm::normalize(y);
+    z = glm::normalize(z);
+
+    return glm::mat3(x, y, z);
+}
 void SprinklesSystem::draw(Shader& sh)
 {
     if (m_models.empty()) return;
+
+    glm::mat3 cupR3 = extractRotationNoScale(m_cupM);
+    glm::mat4 cupR4 = glm::mat4(1.0f);
+    cupR4[0] = glm::vec4(cupR3[0], 0.0f);
+    cupR4[1] = glm::vec4(cupR3[1], 0.0f);
+    cupR4[2] = glm::vec4(cupR3[2], 0.0f);
 
     for (const auto& s : m_sprinkles)
     {
         if (!s.active) continue;
 
-        glm::vec3 drawPos = s.pos;
-        glm::vec3 drawRot = s.rot;
+        glm::mat4 M(1.0f);
 
         if (s.state == 3 && s.attachedToCup)
         {
-            drawPos = glm::vec3(m_cupM * glm::vec4(s.cupLocalPos, 1.0f));
-            drawRot = s.cupLocalRot;
-        }
+            // 1) world pozicija (kao u tvom kodu koji “dobro rotira”)
+            glm::vec3 drawPos = glm::vec3(m_cupM * glm::vec4(s.cupLocalPos, 1.0f));
 
-        glm::mat4 M(1.0f);
-        M = glm::translate(M, drawPos);
-        M = glm::rotate(M, drawRot.y, glm::vec3(0, 1, 0));
-        M = glm::rotate(M, drawRot.x, glm::vec3(1, 0, 0));
-        M = glm::rotate(M, drawRot.z, glm::vec3(0, 0, 1));
-        M = glm::scale(M, glm::vec3(s.size)); 
+            // 2) napravi M: T(worldPos) * R(cupRotationNoScale) * R(localSprinkleRot) * S(size)
+            M = glm::translate(glm::mat4(1.0f), drawPos);
+
+            // rotacija ?aše (bez scale-a) – da sprinkle prati okretanje globalno
+            M = M * cupR4;
+
+            // lokalna rotacija sprinkle-a koju si zapamtio pri lepljenju
+            M = glm::rotate(M, s.cupLocalRot.y, glm::vec3(0, 1, 0));
+            M = glm::rotate(M, s.cupLocalRot.x, glm::vec3(1, 0, 0));
+            M = glm::rotate(M, s.cupLocalRot.z, glm::vec3(0, 0, 1));
+
+            // scale samo sprinkle size (bez dodatnog 1.4 iz cupM)
+            M = glm::scale(M, glm::vec3(s.size));
+        }
+        else
+        {
+            // stari kod (dobar scale)
+            M = glm::translate(M, s.pos);
+            M = glm::rotate(M, s.rot.y, glm::vec3(0, 1, 0));
+            M = glm::rotate(M, s.rot.x, glm::vec3(1, 0, 0));
+            M = glm::rotate(M, s.rot.z, glm::vec3(0, 0, 1));
+            M = glm::scale(M, glm::vec3(s.size));
+        }
 
         sh.setMat4("uM", M);
 

@@ -10,26 +10,26 @@
 
 struct Sprinkle
 {
-    glm::vec3 pos{0.0f};
-    glm::vec3 vel{0.0f};
+    glm::vec3 pos{ 0.0f };
+    glm::vec3 vel{ 0.0f };
 
-    glm::vec3 rot{0.0f};      
-    glm::vec3 rotSpeed{0.0f};  
+    glm::vec3 rot{ 0.0f };
+    glm::vec3 rotSpeed{ 0.0f };
 
-    glm::vec3 color{1.0f};
+    glm::vec3 color{ 1.0f };
     float size = 0.05f;
 
-    int state = 0;             
+    int state = 0;
     float slideTimer = 0.0f;
     float waitTimer = 0.0f;
     bool waitingToExit = false;
 
     bool attachedToCup = false;
-    glm::vec3 cupLocalPos{ 0.0f };  
+    glm::vec3 cupLocalPos{ 0.0f };
     glm::vec3 cupLocalRot{ 0.0f };
     float slideSpeedMul = 1.0f;
 
-    int modelIndex = 0;       
+    int modelIndex = 0;
 
     bool active = true;
 };
@@ -80,7 +80,7 @@ private:
     float m_spawnAccum = 0.2f;
     int   m_maxCount = 400;
 
-    float m_gravity = -2.0f;    
+    float m_gravity = -2.0f;
     float m_damping = 0.2f;
     float m_friction = 0.88f;
     float m_finalGroundY = -1.3f;
@@ -97,16 +97,16 @@ private:
     glm::vec3 m_tunnelEnd{ 0.0f };
 
 
-    float m_slideSpeed = 0.8f;  
+    float m_slideSpeed = 0.8f;
     float m_exitWait = 0.05f;
 
     bool m_exitOccupied = false;
 
     glm::vec3 m_cupCenter{ 0.0f };
-    float m_cupRadius = 0.5;  
+    float m_cupRadius = 0.5;
 
     glm::vec3 m_iceCenter{ 0.0f };
-    float m_iceRadius = 0.4f;   
+    float m_iceRadius = 0.4f;
 
 
 };

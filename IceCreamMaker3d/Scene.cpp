@@ -101,19 +101,152 @@ void Scene::update(float dt)
         sprinkleSys.setNozzle(nozzlePosW, nozzleDirW, 0.02f);
         sprinkleSys.setTunnel(entW, startW, endW);
 
-
-
         glm::vec3 iceCenterW = glm::vec3(iceM * glm::vec4(0, 0, 0, 1));
         glm::vec3 cupCenterW = glm::vec3(cupM * glm::vec4(0, 0, 0, 1));
 
-        sprinkleSys.setCupRegion(cupCenterW, 0.1f);
-        sprinkleSys.setIceCollider(iceCenterW, 0.23f);
+
+        sprinkleSys.setCupRegion(cupCenterW, 0.3f);
+        sprinkleSys.setIceCollider(iceCenterW, 0.27f);
         sprinkleSys.setCupMatrix(cupM);
 
         sprinkleSys.update(dt);
     }
 }
 
+static void DebugDrawLines(const glm::mat4& VP, const std::vector<glm::vec3>& pts)
+{
+    // pts = lista verteksa u parovima (linije): [a0,b0,a1,b1,...]
+    static GLuint vao = 0, vbo = 0;
+    if (vao == 0)
+    {
+        glGenVertexArrays(1, &vao);
+        glGenBuffers(1, &vbo);
+        glBindVertexArray(vao);
+        glBindBuffer(GL_ARRAY_BUFFER, vbo);
+        glBufferData(GL_ARRAY_BUFFER, 0, nullptr, GL_DYNAMIC_DRAW);
+        glEnableVertexAttribArray(0);
+        glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(glm::vec3), (void*)0);
+        glBindVertexArray(0);
+    }
+
+    glBindVertexArray(vao);
+    glBindBuffer(GL_ARRAY_BUFFER, vbo);
+    glBufferData(GL_ARRAY_BUFFER, pts.size() * sizeof(glm::vec3), pts.data(), GL_DYNAMIC_DRAW);
+
+    // koristi tvoj postoje?i shader: crtaj kao emission-only crveno
+    // o?ekuje: uUseEmission, uEmissionColor, uEmissionStrength, uM, uV, uP
+    // M=I jer su pts ve? u world space
+    glDrawArrays(GL_LINES, 0, (GLsizei)pts.size());
+
+    glBindVertexArray(0);
+}
+
+
+
+static void BuildCenterCross(std::vector<glm::vec3>& out, const glm::vec3& c, float s = 0.05f)
+{
+    out.push_back(c + glm::vec3(-s, 0, 0)); out.push_back(c + glm::vec3(s, 0, 0));
+    out.push_back(c + glm::vec3(0, -s, 0)); out.push_back(c + glm::vec3(0, s, 0));
+    out.push_back(c + glm::vec3(0, 0, -s)); out.push_back(c + glm::vec3(0, 0, s));
+}
+static void DrawDebugLines(Shader& sh,
+    const std::vector<glm::vec3>& pts,
+    const glm::vec3& color)
+{
+    static GLuint vao = 0, vbo = 0;
+
+    if (vao == 0)
+    {
+        glGenVertexArrays(1, &vao);
+        glGenBuffers(1, &vbo);
+
+        glBindVertexArray(vao);
+        glBindBuffer(GL_ARRAY_BUFFER, vbo);
+        glEnableVertexAttribArray(0);
+        glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(glm::vec3), (void*)0);
+        glBindVertexArray(0);
+    }
+
+    glBindVertexArray(vao);
+    glBindBuffer(GL_ARRAY_BUFFER, vbo);
+    glBufferData(GL_ARRAY_BUFFER,
+        pts.size() * sizeof(glm::vec3),
+        pts.data(),
+        GL_DYNAMIC_DRAW);
+
+    sh.setInt("uUseEmission", 1);
+    sh.setVec3("uEmissionColor", color.x, color.y, color.z);
+    sh.setFloat("uEmissionStrength", 5.0f);
+    sh.setMat4("uM", glm::mat4(1.0f));
+
+    glDrawArrays(GL_LINES, 0, (GLsizei)pts.size());
+
+    sh.setInt("uUseEmission", 0);
+    sh.setFloat("uEmissionStrength", 0.0f);
+
+    glBindVertexArray(0);
+}
+
+static void BuildCircleXZ(std::vector<glm::vec3>& out,
+    const glm::vec3& c,
+    float r,
+    int segs = 64)
+{
+    for (int i = 0; i < segs; i++)
+    {
+        float a0 = i * 6.2831853f / segs;
+        float a1 = (i + 1) * 6.2831853f / segs;
+
+        glm::vec3 p0 = c + glm::vec3(cos(a0) * r, 0, sin(a0) * r);
+        glm::vec3 p1 = c + glm::vec3(cos(a1) * r, 0, sin(a1) * r);
+
+        out.push_back(p0);
+        out.push_back(p1);
+    }
+}
+
+
+
+static void BuildCross(std::vector<glm::vec3>& out,
+    const glm::vec3& c,
+    float s = 0.05f)
+{
+    out.push_back(c + glm::vec3(-s, 0, 0));
+    out.push_back(c + glm::vec3(s, 0, 0));
+
+    out.push_back(c + glm::vec3(0, -s, 0));
+    out.push_back(c + glm::vec3(0, s, 0));
+
+    out.push_back(c + glm::vec3(0, 0, -s));
+    out.push_back(c + glm::vec3(0, 0, s));
+}
+
+// “sfera” kao 3 kruga (XY, XZ, YZ)
+static void BuildSphere3Circles(std::vector<glm::vec3>& out, const glm::vec3& c, float r, int segs = 64)
+{
+    // XZ
+    BuildCircleXZ(out, c, r, segs);
+
+    // XY
+    for (int i = 0; i < segs; i++)
+    {
+        float a0 = (float)i * 6.2831853f / (float)segs;
+        float a1 = (float)(i + 1) * 6.2831853f / (float)segs;
+        glm::vec3 p0 = c + glm::vec3(std::cos(a0) * r, std::sin(a0) * r, 0.0f);
+        glm::vec3 p1 = c + glm::vec3(std::cos(a1) * r, std::sin(a1) * r, 0.0f);
+        out.push_back(p0); out.push_back(p1);
+    }
+
+    // YZ
+    for (int i = 0; i < segs; i++)
+    {
+        float a0 = (float)i * 6.2831853f / (float)segs;
+        float a1 = (float)(i + 1) * 6.2831853f / (float)segs;
+        glm::vec3 p0 = c + glm::vec3(0.0f, std::cos(a0) * r, std::sin(a0) * r);
+        glm::vec3 p1 = c + glm::vec3(0.0f, std::cos(a1) * r, std::sin(a1) * r);
+        out.push_back(p0); out.push_back(p1);
+    }
+}
 
 
 void Scene::render(const RenderContext& ctx)
@@ -139,9 +272,11 @@ void Scene::render(const RenderContext& ctx)
     sh.setInt("uUseProgressMask", 0);
     sh.setFloat("uProgress", 1.0f);
 
+    
+
+    // vrati emission nazad (da ti ne oboji ostalo)
     sh.setInt("uUseEmission", 0);
     sh.setFloat("uEmissionStrength", 0.0f);
-
     // ----------------------------------------------------
     // BUTTON POINT LIGHT (affects whole scene)
     // ----------------------------------------------------
@@ -264,7 +399,7 @@ void Scene::render(const RenderContext& ctx)
     {
         sh.setInt("uUseEmission", 1);
         sh.setVec3("uEmissionColor", 1.0f, 0.85f, 0.7f);
-        sh.setFloat("uEmissionStrength", 2.5f);
+        sh.setFloat("uEmissionStrength", 4.5f);
     }
     else
     {
@@ -296,6 +431,7 @@ void Scene::render(const RenderContext& ctx)
 
     sh.setMat4("uM", base);
     res.sprinklesContainer.Draw(sh);
+   
 
     glDepthMask(GL_TRUE);
     glDisable(GL_BLEND);

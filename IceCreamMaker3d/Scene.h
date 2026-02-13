@@ -31,7 +31,10 @@ public:
 
 private:
     Resources res;
-
+    glm::vec3 m_dbgCupCenter{ 0.0f };
+    glm::vec3 m_dbgIceCenter{ 0.0f };
+    float     m_dbgCupRadius = 0.0f;
+    float     m_dbgIceRadius = 0.0f;
     CupController cupCtrl;
     PourSystem pourSys;
     IceCreamSystem iceSys;
